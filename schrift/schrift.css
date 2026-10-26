@@ -1,0 +1,6 @@
+/* Schriften liegen im Projekt – nichts wird von Google oder anderen Servern geladen.
+   „Insel Text“ = verkleinerte Fassung von Andika (SIL), „Insel Titel“ = verkleinerte Fassung von Lilita One.
+   Beide unter der SIL Open Font License 1.1, siehe OFL-*.txt. */
+@font-face { font-family: 'Insel Text'; font-style: normal; font-weight: 400; font-display: swap; src: url('insel-text-400.woff') format('woff'); }
+@font-face { font-family: 'Insel Text'; font-style: normal; font-weight: 700; font-display: swap; src: url('insel-text-700.woff') format('woff'); }
+@font-face { font-family: 'Insel Titel'; font-style: normal; font-weight: 400; font-display: swap; src: url('insel-titel-400.woff') format('woff'); }

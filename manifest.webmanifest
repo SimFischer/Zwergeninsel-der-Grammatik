@@ -1,0 +1,16 @@
+{
+  "name": "Zwergeninsel",
+  "short_name": "Zwergeninsel",
+  "description": "Argumente schmieden und gemeinsam ein Zwergendorf bauen",
+  "lang": "de",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1d140f",
+  "theme_color": "#1d140f",
+  "icons": [
+    { "src": "bilder/app-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "bilder/app-icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

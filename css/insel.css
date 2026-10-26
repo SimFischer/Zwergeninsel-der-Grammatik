@@ -1,0 +1,388 @@
+/* Zwergeninsel – Ansicht für das Board */
+
+.insel-screen { position: fixed; inset: 0; background: #1f6a85; overflow: hidden; }
+.insel-buehne {
+  position: absolute; left: 50%; top: 50%;
+  width: min(100vw, calc(100vh * 16 / 9)); aspect-ratio: 16 / 9;
+  transform: translate(-50%, -50%);
+}
+.insel-grund { position: absolute; inset: 0; }
+.insel-grund img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.insel-grund.mit-bild .insel-ersatz { display: none; }
+.insel-grund.mit-bild .wellen { opacity: 0.35; }
+.insel-ersatz {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 39% 36% at 52% 58%, #7fae54 0 92%, transparent 93%),
+    radial-gradient(ellipse 42% 39% at 52% 58%, #e3c98c 0 92%, transparent 93%),
+    radial-gradient(ellipse 46% 43% at 52% 58%, rgba(140, 220, 220, 0.55) 0 90%, transparent 92%),
+    linear-gradient(180deg, #3f9bb5, #1f6a85);
+}
+.wellen { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(170deg, transparent 0 46px, rgba(255, 255, 255, 0.05) 46px 50px); animation: wellen 9s linear infinite; }
+@keyframes wellen { to { background-position: 0 100px; } }
+
+.bau { position: absolute; transform: translate(-50%, -100%); z-index: 2; pointer-events: none; }
+.bau img, .bau .platzhalter { width: 100%; display: block; filter: drop-shadow(0 0.6vw 0.5vw rgba(0, 0, 0, 0.35)); }
+.bau .platzhalter { font-size: 1vw; border-color: rgba(58, 38, 23, 0.55); color: #3a2617; background: rgba(255, 255, 255, 0.35); }
+.bau .ruine { opacity: 1; }
+.bau.gebaut .ruine { display: none; }
+.bau.wird-gebaut { animation: bauHuepfer 0.9s ease-out; }
+@keyframes bauHuepfer { 0% { transform: translate(-50%, -100%) scale(0.85); } 55% { transform: translate(-50%, -100%) scale(1.12); } 100% { transform: translate(-50%, -100%) scale(1); } }
+.bau.gesperrt { filter: saturate(0.6) brightness(0.92); }
+.staub {
+  position: absolute; z-index: 6; width: 2.4vw; height: 2.4vw; border-radius: 50%;
+  background: radial-gradient(circle, rgba(250, 240, 220, 0.95), rgba(230, 210, 170, 0.6) 60%, transparent 70%);
+  animation: staub 1.1s ease-out forwards; pointer-events: none;
+}
+@keyframes staub { to { transform: translate(var(--dx), var(--dy)) scale(3); opacity: 0; } }
+
+.mini-zwerg { position: absolute; z-index: 3; width: 3.2%; transform: translate(-50%, -100%); animation: wippen 2.6s infinite ease-in-out; pointer-events: none; }
+.mini-zwerg img { width: 100%; display: block; filter: drop-shadow(0 0.3vw 0.3vw rgba(0, 0, 0, 0.35)); }
+.mini-zwerg .platzhalter { font-size: 0.6vw; padding: 2px; }
+.mini-zwerg.neu { animation: ankommen 0.8s ease-out, wippen 2.6s 0.8s infinite ease-in-out; }
+@keyframes wippen { 0%, 100% { transform: translate(-50%, -100%); } 50% { transform: translate(-50%, -106%); } }
+@keyframes ankommen { from { transform: translate(-50%, -200%) scale(0.4); opacity: 0; } }
+
+.schmuck { position: absolute; z-index: 2; transform: translate(-50%, -100%); pointer-events: none; animation: aufploppen 0.6s ease-out; }
+.schmuck img, .schmuck .platzhalter { width: 100%; display: block; }
+.schmuck .platzhalter { font-size: 0.8vw; padding: 2px; color: #3a2617; border-color: rgba(58, 38, 23, 0.5); background: rgba(255, 255, 255, 0.35); }
+
+/* Schrift und Tafeln über der Insel */
+.insel-titel { position: absolute; left: 2vw; top: 2vh; z-index: 10; color: #fff4dc; text-shadow: 0 3px 0 #4a2610, 0 6px 16px rgba(0, 0, 0, 0.5); }
+.insel-titel h1 { font-size: clamp(30px, 3.6vw, 64px); line-height: 1; }
+.insel-titel .unter { font-size: clamp(16px, 1.5vw, 26px); }
+.tafel { position: absolute; right: 2vw; top: 2vh; z-index: 10; width: clamp(280px, 24vw, 420px); padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.tafel .zahl { font-family: var(--titel); font-size: clamp(36px, 3.4vw, 60px); line-height: 1; }
+.balken { height: 22px; border-radius: 11px; border: 3px solid #8a6438; background: #fffaf0; overflow: hidden; }
+.balken > div { height: 100%; background: linear-gradient(180deg, #8db04c, var(--moos)); transition: width 1s ease-out; }
+.tafel .klein { font-size: 17px; color: var(--tinte-hell); line-height: 1.35; }
+.tafel .zeile { display: flex; align-items: center; gap: 10px; font-size: 18px; }
+.tafel .zeile img, .tafel .zeile .platzhalter { width: 36px; height: 36px; font-size: 0; border-width: 2px; padding: 0; }
+.insel-knoepfe { position: absolute; left: 2vw; bottom: 2.5vh; z-index: 10; display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* Scanner */
+.scanner { display: flex; gap: 20px; align-items: stretch; flex-wrap: wrap; justify-content: center; }
+.scanner video { width: min(56vw, 560px); max-height: 60vh; border-radius: 16px; background: #000; object-fit: cover; }
+.scan-liste { min-width: 240px; max-width: 320px; max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.scan-eintrag { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 12px; background: rgba(111, 143, 58, 0.18); font-size: 18px; animation: einblenden 0.3s; }
+.scan-eintrag img, .scan-eintrag .platzhalter { width: 42px; height: 42px; object-fit: contain; font-size: 0; padding: 0; }
+.fenster.breit { max-width: 980px; }
+
+/* Zwergenrat */
+.rat { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; }
+.rat-inhalt { position: relative; z-index: 2; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 2vw; padding: 2vw; min-height: 0; }
+.rat-frage { grid-column: 1 / -1; text-align: center; padding: 14px 20px; font-size: clamp(26px, 2.9vw, 60px); font-family: var(--titel); }
+.stimmen { display: flex; align-items: center; gap: 16px; font-family: var(--titel); font-size: 44px; }
+.rat-regeln { padding: 18px 20px; font-size: clamp(17px, 1.3vw, 22px); overflow-y: auto; }
+.rat-regeln h3 { font-size: 26px; margin-bottom: 6px; }
+.rat-regeln ul { margin: 0 0 12px; padding-left: 22px; }
+.rat-regeln li { margin-bottom: 6px; }
+.uhr { font-family: var(--titel); font-size: clamp(30px, 3vw, 64px); text-align: center; }
+
+.lieferliste { width: 100%; border-collapse: collapse; font-size: 17px; text-align: left; }
+.lieferliste th, .lieferliste td { padding: 6px 8px; border-bottom: 1px solid rgba(58, 38, 23, 0.2); }
+.lieferliste img, .lieferliste .platzhalter { width: 36px; height: 36px; object-fit: contain; font-size: 0; padding: 0; vertical-align: middle; }
+.einstellung { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; font-size: 20px; }
+.einstellung input[type=number] { width: 90px; font-size: 26px; padding: 6px 10px; border-radius: 10px; border: 3px solid #8a6438; text-align: center; -webkit-user-select: text; user-select: text; }
+
+.runenwort { font-family: var(--titel); font-size: clamp(48px, 6vw, 96px); letter-spacing: 8px; color: var(--gold-dunkel); text-shadow: 0 3px 0 rgba(0, 0, 0, 0.2); }
+
+/* ---------- Lebendige Insel ---------- */
+.wolken span { position: absolute; z-index: 8; width: 18%; height: 7%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 60%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%);
+  animation: wolke 70s linear infinite; }
+.wolken span:nth-child(1) { top: 2%; width: 13%; animation-delay: -10s; }
+.wolken span:nth-child(2) { top: 6%; width: 11%; animation-duration: 95s; animation-delay: -50s; opacity: 0.8; }
+.wolken span:nth-child(3) { top: 12%; width: 12%; animation-duration: 60s; animation-delay: -30s; opacity: 0.7; }
+@keyframes wolke { from { left: -25%; } to { left: 105%; } }
+.moewe { position: absolute; z-index: 9; width: 3.2%; pointer-events: none; animation: moeweFlug 26s linear infinite; }
+.moewe path { animation: fluegel 0.6s ease-in-out infinite alternate; transform-origin: 50% 45%; }
+@keyframes fluegel { from { transform: scaleY(1); } to { transform: scaleY(0.45); } }
+.moewen .moewe:nth-child(1) { top: 26%; animation-delay: -4s; }
+.moewen .moewe:nth-child(2) { top: 31%; width: 2.4%; animation-duration: 32s; animation-delay: -18s; }
+.moewen .moewe:nth-child(3) { top: 14%; width: 2.8%; animation-duration: 38s; animation-delay: -27s; }
+@keyframes moeweFlug {
+  0% { left: -5%; transform: translateY(0); } 25% { transform: translateY(-30%); } 50% { transform: translateY(20%); }
+  75% { transform: translateY(-15%); } 100% { left: 105%; transform: translateY(0); } }
+.moewe-flug { position: absolute; z-index: 12; width: 7%; left: 105%; top: 20%; pointer-events: none; animation: geschenkFlug 4s ease-in-out forwards; }
+.moewe-flug .moewe { position: static; width: 100%; animation: none; }
+@keyframes geschenkFlug { 0% { left: 105%; top: 15%; } 60% { left: 50%; top: 45%; } 70% { left: 47%; top: 47%; } 100% { left: -12%; top: 10%; } }
+.rauch { position: absolute; width: 18%; height: 40%; transform: translate(-50%, -100%); pointer-events: none; display: none; }
+.bau.mit-rauch .rauch { display: block; }
+.rauch span { position: absolute; bottom: 0; left: 30%; width: 50%; aspect-ratio: 1; border-radius: 50%; background: rgba(235, 230, 222, 0.7); animation: rauch 4.5s ease-out infinite; }
+.rauch span:nth-child(2) { animation-delay: 1.5s; }
+.rauch span:nth-child(3) { animation-delay: 3s; }
+@keyframes rauch { 0% { transform: translate(0, 0) scale(0.4); opacity: 0.8; } 100% { transform: translate(60%, -260%) scale(1.8); opacity: 0; } }
+.bau.segelt { animation: segeln 12s ease-in-out forwards; }
+@keyframes segeln { 0% { transform: translate(-50%, -100%); } 45% { transform: translate(250%, -130%) rotate(2deg); } 55% { transform: translate(250%, -130%) rotate(-2deg); } 100% { transform: translate(-50%, -100%); } }
+@media (prefers-reduced-motion: reduce) { .wolken span, .moewe, .rauch span, .bau.segelt { animation: none; } }
+
+/* ---------- Auftrag des Tages ---------- */
+.auftrag-box { padding: 10px 12px; border-radius: 12px; border: 2px dashed var(--gold-dunkel); background: rgba(232, 178, 58, 0.15); display: flex; flex-direction: column; gap: 6px; }
+.auftrag-box.erledigt { border-style: solid; border-color: var(--moos); background: rgba(111, 143, 58, 0.18); }
+.auftrag-titel { font-family: var(--titel); font-size: 20px; }
+.auftrag-box .balken { height: 16px; }
+.auftrag-wahl { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+/* ---------- Inselrätsel ---------- */
+.raetsel-inhalt { position: relative; z-index: 2; flex: 1; display: flex; align-items: center; justify-content: center; padding: 2vw; overflow-y: auto; }
+.raetsel-karte { width: min(1100px, 100%); padding: 26px 30px; display: flex; flex-direction: column; gap: 18px; }
+.raetsel-optionen { display: flex; flex-direction: column; gap: 14px; }
+.raetsel-option { display: flex; align-items: center; gap: 18px; padding: 14px 20px; border-radius: 16px; background: #fffaf0; border: 3px solid #b08a5a; font-size: clamp(22px, 2vw, 32px); line-height: 1.3; color: var(--tinte); transition: opacity 0.4s, background 0.4s; }
+.raetsel-option .buchstabe { flex: none; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--titel); font-size: 30px; color: #fff8e6; background: var(--holz); }
+.raetsel-option.richtig { background: #e3f0c8; border-color: var(--moos); }
+.raetsel-option.richtig .buchstabe { background: var(--moos-dunkel); }
+.raetsel-option.weg { opacity: 0.35; }
+.raetsel .moewe-flug { width: 9%; z-index: 50; }
+
+/* ---------- Bilder für Wolken, Möwen und Tiere ---------- */
+.wolken span.mit-bild { background: none; height: auto; }
+.wolken span img { width: 100%; display: block; opacity: 0.85; }
+.moewe img { width: 100%; display: block; }
+.moewe .fluegel-b { position: absolute; inset: 0; opacity: 0; }
+.moewe:not(.mit-geschenk) .fluegel-a { animation: flatterA 0.5s steps(1) infinite; }
+.moewe:not(.mit-geschenk) .fluegel-b { animation: flatterB 0.5s steps(1) infinite; }
+@keyframes flatterA { 0% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes flatterB { 0% { opacity: 0; } 50% { opacity: 1; } }
+.moewe-svg { width: 100%; display: block; }
+.moewe-svg path { animation: fluegel 0.6s ease-in-out infinite alternate; transform-origin: 50% 45%; }
+.tiere { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.tier { position: absolute; transform: translate(-50%, -100%); }
+.tier img { width: 100%; display: block; filter: drop-shadow(0 0.3vw 0.3vw rgba(0, 0, 0, 0.3)); }
+.tier-krabbe { animation: krabbeLauf 14s ease-in-out infinite; }
+@keyframes krabbeLauf { 0%, 100% { margin-left: 0; } 45% { margin-left: 8%; } 50% { margin-left: 8%; transform: translate(-50%, -100%) scaleX(-1); } 95% { margin-left: 0; transform: translate(-50%, -100%) scaleX(-1); } }
+.tier-schildkroete { animation: schildkroete 40s linear infinite; }
+@keyframes schildkroete { 0% { margin-left: 0; } 50% { margin-left: -6%; } 51% { transform: translate(-50%, -100%) scaleX(-1); } 100% { margin-left: 0; transform: translate(-50%, -100%) scaleX(-1); } }
+.tier-huhn img { animation: picken 2.2s ease-in-out infinite; transform-origin: 60% 90%; }
+.tier-huhn.zwei img { animation-delay: -1.1s; }
+@keyframes picken { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(28deg); } 80% { transform: rotate(0); } 88% { transform: rotate(24deg); } }
+.tier-hase { animation: hoppeln 6s ease-in-out infinite; }
+@keyframes hoppeln { 0%, 30%, 100% { margin-top: 0; } 10% { margin-top: -1.5%; } 20% { margin-top: 0; } 50% { margin-top: -1.2%; margin-left: 2%; } 60% { margin-top: 0; margin-left: 2%; } 80% { margin-left: 0; } }
+.tier-schmetterling { animation: flattern 9s ease-in-out infinite; }
+.tier-schmetterling img { animation: schlag 0.35s ease-in-out infinite alternate; }
+@keyframes flattern { 0%, 100% { margin-left: 0; margin-top: 0; } 25% { margin-left: 3%; margin-top: -2%; } 50% { margin-left: 6%; margin-top: 1%; } 75% { margin-left: 2%; margin-top: -1%; } }
+@keyframes schlag { from { transform: scaleX(1); } to { transform: scaleX(0.55); } }
+.tier-delfin { opacity: 0; animation: delfin 13s ease-in-out infinite; }
+.tier-delfin.zwei { animation-delay: -6s; }
+@keyframes delfin { 0%, 60%, 100% { opacity: 0; transform: translate(-50%, -60%) rotate(-30deg); }
+  65% { opacity: 1; transform: translate(-30%, -140%) rotate(-10deg); } 72% { opacity: 1; transform: translate(-5%, -170%) rotate(15deg); } 79% { opacity: 1; transform: translate(20%, -100%) rotate(40deg); } 82% { opacity: 0; } }
+.auftrag-titel { display: flex; align-items: center; gap: 8px; }
+.auftrag-bild { width: 34px; height: 34px; object-fit: contain; }
+@media (prefers-reduced-motion: reduce) { .tier, .tier img { animation: none !important; opacity: 1; } }
+
+/* ---------- Einklappbare Tafel ---------- */
+.tafel-kopf { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tafel-klapp { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(58, 38, 23, 0.4); background: rgba(255, 255, 255, 0.5); color: #3a2617; font-size: 20px; cursor: pointer; flex: none; }
+.tafel.zu { width: clamp(240px, 19vw, 330px); padding: 12px 16px; gap: 6px; }
+.tafel.zu .zahl { font-size: clamp(28px, 2.4vw, 42px); }
+.moewe.ein-bild .fluegel-a { animation: none; }
+
+/* ---------- Lieferungen eintippen ---------- */
+.fenster.liefer-dialog { max-width: min(1180px, 96vw); width: 96vw; }
+.liefer-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.liefer-zaehler { font-size: 20px; font-weight: 700; color: var(--tinte-hell); }
+.liefer-fenster { display: grid; grid-template-columns: 1.25fr 1fr; gap: 26px; align-items: start; }
+.liefer-links { display: flex; flex-direction: column; gap: 14px; }
+.schein-eingabe { display: flex; gap: 12px; justify-content: center; }
+.schein-kasten { width: 92px; height: 108px; border-radius: 16px; border: 4px dashed #b08a5a; background: #fffaf0; display: flex; align-items: center; justify-content: center; font-family: 'Courier New', monospace; font-weight: 700; font-size: 72px; color: #3a2617; }
+.schein-kasten.voll { border-style: solid; border-color: #8a6438; }
+.schein-eingabe.wackeln { animation: wackeln 0.45s; }
+@keyframes wackeln { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-12px); } 40% { transform: translateX(12px); } 60% { transform: translateX(-8px); } 80% { transform: translateX(8px); } }
+.liefer-rueck { min-height: 86px; display: flex; align-items: center; }
+.liefer-rueck > * { width: 100%; }
+.liefer-ok { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 14px; background: #e4f1d4; border: 3px solid #6b9b3a; animation: aufploppen 0.4s ease-out; }
+.liefer-ok-bild { width: 64px; height: 64px; flex: none; }
+.liefer-ok-bild img { width: 100%; height: 100%; object-fit: contain; }
+.liefer-ok-titel { font-family: var(--titel); font-size: 26px; }
+.liefer-ok > div:nth-child(2) { flex: 1; font-size: 19px; }
+.schein-tasten { display: grid; grid-template-columns: repeat(9, 1fr); gap: 7px; }
+.schein-taste { aspect-ratio: 1; border-radius: 10px; border: 2px solid #8a6438; background: #fffaf0; font-family: 'Courier New', monospace; font-weight: 700; font-size: clamp(20px, 2.2vw, 30px); color: #3a2617; cursor: pointer; box-shadow: 0 3px 0 rgba(58, 38, 23, 0.3); }
+.schein-taste:active { transform: translateY(2px); box-shadow: none; }
+.schein-taste.breit { grid-column: span 4; aspect-ratio: auto; background: #f2d9b0; }
+.liefer-rechts { display: flex; flex-direction: column; gap: 10px; }
+.liefer-raster { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.liefer-zelle { aspect-ratio: 1.15; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: var(--titel); font-size: clamp(20px, 2vw, 30px); background: rgba(58, 38, 23, 0.08); color: rgba(58, 38, 23, 0.55); border: 2px solid rgba(58, 38, 23, 0.15); }
+.liefer-zelle.frueher { background: #f3e6c8; color: #6b5442; }
+.liefer-zelle.da { background: #7fb24a; color: #fff; border-color: #55812a; }
+.knopf-link { align-self: flex-start; background: none; border: none; padding: 4px 0; font: inherit; font-size: 16px; color: var(--tinte-hell); text-decoration: underline; cursor: pointer; }
+@media (max-width: 900px) { .liefer-fenster { grid-template-columns: 1fr; } .schein-kasten { width: 70px; height: 84px; font-size: 54px; } }
+.fenster.liefer-dialog { max-height: 96vh; overflow-y: auto; padding-top: 18px; padding-bottom: 18px; gap: 12px; }
+.liefer-rueck { min-height: 72px; }
+@media (max-height: 820px) {
+  .schein-kasten { width: 72px; height: 84px; font-size: 54px; border-width: 3px; }
+  .schein-taste { aspect-ratio: 1.35; font-size: 22px; }
+  .liefer-zelle { aspect-ratio: 1.5; font-size: 22px; }
+  .liefer-rueck { min-height: 60px; }
+  .liefer-ok-bild { width: 48px; height: 48px; }
+}
+
+/* ---------- Mitwachsende Bedienelemente auf großen Boards ---------- */
+.insel-titel { transform: scale(var(--ui, 1)); transform-origin: top left; }
+.tafel { transform: scale(var(--ui, 1)); transform-origin: top right; }
+.insel-knoepfe { transform: scale(var(--ui, 1)); transform-origin: bottom left; }
+body.insel-seite .schleier > .fenster { transform: scale(var(--ui, 1)); max-height: calc(92vh / var(--ui, 1)); max-width: min(620px, calc(94vw / var(--ui, 1))); }
+body.insel-seite .schleier > .fenster.breit { max-width: min(980px, calc(94vw / var(--ui, 1))); }
+body.insel-seite .schleier > .fenster.liefer-dialog { width: calc(94vw / var(--ui, 1)); max-width: 1180px; max-height: calc(96vh / var(--ui, 1)); }
+.raetsel-karte { width: min(1400px, 100%); }
+.raetsel-option { font-size: clamp(22px, 2.2vw, 46px); }
+.raetsel-option .buchstabe { width: clamp(56px, 3.6vw, 80px); height: clamp(56px, 3.6vw, 80px); font-size: clamp(30px, 2vw, 44px); }
+.raetsel-karte .frage, .raetsel-karte h2 { font-size: clamp(26px, 2.2vw, 44px); }
+.rat-regeln { font-size: clamp(17px, 1.5vw, 30px); }
+.rat-regeln h3 { font-size: clamp(22px, 1.8vw, 36px); }
+.rat .leiste .titel { font-size: clamp(24px, 2vw, 40px); }
+.rat .uhr { font-size: clamp(30px, 3vw, 64px); }
+.fest-bild { width: 100%; border-radius: 14px; overflow: hidden; }
+.fest-bild img { width: 100%; max-height: 28vh; object-fit: cover; display: block; }
+
+body.insel-seite .meldung { font-size: calc(20px * var(--ui, 1)); }
+/* Zwergenrat: Bilder begrenzen, Regeln lesbar halten */
+.rat .stimmen { font-size: clamp(40px, 3vw, 64px); }
+.rat .stimmen .rund { width: clamp(48px, 3.2vw, 76px); height: clamp(48px, 3.2vw, 76px); font-size: clamp(26px, 2vw, 44px); }
+.rat .leiste .knopf { font-size: clamp(16px, 1.2vw, 26px); }
+body.insel-seite .meldungen { top: calc(3vh * var(--ui, 1)); bottom: auto; flex-direction: column; }
+
+/* ---------- Ratsfragen mit Freischaltungen, Inselbotschaft ---------- */
+.rat-reiter { display: flex; gap: 8px; margin-left: 14px; }
+.tafel-botschaft { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 12px; border-radius: 12px; background: #fffaf0; border: 2px dashed #b08a5a; }
+.tafel-botschaft span { font-size: 15px; color: var(--tinte-hell); }
+.tafel-botschaft b { font-family: var(--titel); font-weight: 400; font-size: clamp(24px, 2vw, 34px); letter-spacing: 3px; color: #8a4b1c; }
+.rat-wartet { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: 12px; background: #fff1cf; border: 3px solid var(--gold, #e8b23a); font-size: 17px; animation: rat-puls 2.4s ease-in-out infinite; }
+.rat-wartet .knopf { align-self: flex-start; }
+@keyframes rat-puls { 0%, 100% { box-shadow: 0 0 0 0 rgba(232, 178, 58, 0.0); } 50% { box-shadow: 0 0 0 6px rgba(232, 178, 58, 0.35); } }
+.tafel-botschaft b { white-space: nowrap; }
+.tafel.zu .tafel-botschaft b { font-size: clamp(20px, 1.6vw, 28px); }
+
+/* ---------- Rollen und Redeliste ---------- */
+.karten-kopf { display: flex; align-items: center; gap: 6px; }
+.karten-kopf img, .karten-kopf .platzhalter, .karten-kopf-leer { width: 42px; height: 42px; object-fit: contain; font-size: 0; padding: 0; border-radius: 8px; }
+.karten-kopf-leer { background: rgba(58, 38, 23, 0.08); }
+.karten-kopf b { font-family: var(--titel); font-weight: 400; font-size: 26px; }
+.fenster.rede-dialog { max-width: min(1180px, 96vw); width: 96vw; }
+.rede-raster { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; align-self: stretch; }
+.rede-zelle { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 12px; border: 2px solid rgba(58, 38, 23, 0.2); background: rgba(58, 38, 23, 0.06); cursor: pointer; min-height: 76px; }
+.rede-zelle.stufe-1 { background: #e4f1d4; border-color: #9cc46f; }
+.rede-zelle.stufe-2 { background: #c9e3a8; border-color: #6b9b3a; }
+.rede-zelle.stufe-3 { background: #f6dc8a; border-color: #c89a2a; }
+.rede-zelle.hervor { box-shadow: 0 0 0 4px var(--gold, #e8b23a); animation: aufploppen 0.5s; }
+.rede-striche { font-family: var(--titel); letter-spacing: 2px; color: #3f6a1c; min-height: 18px; font-size: 22px; }
+.knopf.aktiv { outline: 3px solid var(--gold, #e8b23a); }
+@media (max-width: 900px) { .rede-raster { grid-template-columns: repeat(6, 1fr); } }
+
+/* ---------- Klassenüberblick ---------- */
+.fenster.ueberblick-dialog { max-width: min(1180px, 96vw); width: 96vw; text-align: left; align-items: stretch; }
+.ue-spalten { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; }
+.ue-spalten h3 { margin: 12px 0 6px; font-size: 22px; }
+.ue-zeile { display: grid; grid-template-columns: 210px 1fr 64px; gap: 10px; align-items: center; font-size: 17px; }
+.ue-balken { height: 16px; border-radius: 8px; background: rgba(58, 38, 23, 0.1); overflow: hidden; }
+.ue-balken div { height: 100%; background: #7fb24a; border-radius: 8px; }
+.ue-zeile.schwer .ue-balken div { background: #e8a23a; }
+.ue-zahl { text-align: right; font-weight: 700; }
+.ue-krone { font-size: 14px; color: var(--tinte-hell); margin: 0 0 6px 220px; }
+.ue-offen { display: flex; flex-wrap: wrap; gap: 8px; }
+.ue-karte { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 10px; background: #fff1cf; border: 2px solid #e8b23a; font-size: 15px; }
+.ue-karte.nie { background: rgba(58, 38, 23, 0.06); border-color: rgba(58, 38, 23, 0.2); }
+.ue-karte .karten-kopf img, .ue-karte .karten-kopf-leer { width: 32px; height: 32px; }
+.ue-karte .karten-kopf b { font-size: 20px; }
+@media (max-width: 900px) { .ue-spalten { grid-template-columns: 1fr; } }
+
+/* ---------- Stammesräte ---------- */
+.stamm-inhalt { position: relative; z-index: 2; flex: 1; min-height: 0; overflow-y: auto; padding: 1.4vw 2vw 2vw; display: flex; flex-direction: column; gap: 1.2vw; }
+.stamm-kopf { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.2vw; }
+.stamm-thema, .stamm-code { padding: 12px 18px; }
+.stamm-frage { font-family: var(--titel); font-size: clamp(24px, 2.2vw, 44px); line-height: 1.15; }
+.stamm-code { text-align: center; display: flex; flex-direction: column; justify-content: center; max-width: 360px; }
+.stamm-code b { font-family: var(--titel); font-weight: 400; font-size: clamp(36px, 3.2vw, 64px); letter-spacing: 4px; color: #8a4b1c; white-space: nowrap; }
+.stamm-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(220px, 15vw, 320px), 1fr)); gap: 1vw; }
+.stamm-karte { padding: 10px 14px 12px; border-top: 8px solid; display: flex; flex-direction: column; gap: 6px; }
+.stamm-karte h3 { margin: 0; font-size: clamp(20px, 1.5vw, 30px); }
+.stamm-mitglieder { display: flex; flex-direction: column; gap: 4px; }
+.stamm-mitglied { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; font-size: clamp(15px, 1vw, 21px); }
+.stamm-unten { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 10px 16px; border-radius: 14px; background: rgba(255, 250, 240, 0.94); color: var(--tinte); font-size: clamp(17px, 1.3vw, 26px); }
+@media (max-width: 900px) { .stamm-kopf { grid-template-columns: 1fr; } }
+.stamm-kopf { align-items: start; }
+
+
+/* Inselbotschaft und Stammescode: antippen = bildschirmfüllend für die letzte Reihe */
+button.tafel-botschaft, button.stamm-code { font: inherit; color: inherit; cursor: pointer; width: 100%; text-align: inherit; }
+button.stamm-code { text-align: center; }
+.tafel-botschaft .lupe { font-size: 20px; color: var(--tinte-hell); margin-left: 4px; }
+.tafel-botschaft b { font-size: clamp(28px, 2.4vw, 44px); }
+.gross-code { position: fixed; inset: 0; z-index: 90; background: rgba(20, 12, 7, 0.94); color: #fff4dc; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; cursor: pointer; animation: einblenden 0.2s; text-align: center; padding: 4vh 4vw; }
+.gross-code-titel { font-family: var(--titel); font-size: clamp(32px, 5vh, 72px); color: #e8b23a; }
+.gross-code-wort { font-family: var(--titel); font-size: min(26vh, 15vw); line-height: 1; letter-spacing: 0.08em; white-space: nowrap; }
+.gross-code-hinweis { font-size: clamp(24px, 3.4vh, 48px); }
+.gross-code-zu { font-size: clamp(16px, 2vh, 26px); opacity: 0.6; }
+.tafel-botschaft, .tafel.zu .tafel-botschaft { flex-wrap: wrap; }
+.tafel.zu .tafel-botschaft b { font-size: clamp(28px, 2.4vw, 44px); }
+
+/* ---------- Mehr Insel, weniger UI ---------- */
+.tafel { width: clamp(250px, 20vw, 360px); padding: 14px 16px; gap: 8px; }
+.tafel.zu { width: clamp(220px, 16vw, 300px); padding: 10px 14px; }
+.tafel-kopf-knoepfe { display: flex; gap: 6px; }
+.tafel-klapp { width: 44px; height: 44px; }
+.tafel.versteckt { width: auto; padding: 0; background: none; box-shadow: none; border: 0; right: 0; }
+.tafel.versteckt::before, .tafel.versteckt::after { display: none; }
+.tafel-reiter { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 14px 8px 10px; border-radius: 14px 0 0 14px; border: 0; cursor: pointer;
+  font: inherit; font-size: 20px; color: var(--tinte); background: linear-gradient(180deg, #fff4dc, #f4e6c8); box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+.tafel-reiter b { font-family: var(--titel); font-weight: 400; font-size: 24px; }
+.tafel-reiter-pfeil { font-size: 18px; color: var(--tinte-hell); }
+.tafel-reiter.achtung { background: linear-gradient(180deg, #ffe7a6, #e8b23a); animation: aufploppen 0.6s ease-out 2; }
+/* Leiste unten: niedriger, weiterhin gut antippbar (mind. 48 px) */
+.insel-knoepfe { gap: 10px; bottom: 1.6vh; }
+.insel-knoepfe .knopf { min-height: 48px; padding: 6px 16px; font-size: 20px; }
+.insel-knoepfe .rund { width: 50px; height: 50px; }
+.insel-knoepfe .rund svg { width: 24px; height: 24px; }
+
+.rat-pfeil { font-size: calc(30px * var(--ui, 1)); color: #8a6438; flex: none; }
+
+/* Inselrätsel: sicher zentrieren – bei langem Inhalt beginnt er immer unterhalb der Kopfzeile und bleibt scrollbar */
+.raetsel-inhalt { align-items: flex-start; justify-content: flex-start; min-height: 0; scroll-padding-top: 16px; }
+.raetsel-inhalt > * { margin: auto; }
+
+/* Geschenk-Möwe fliegt nach links und schaut auch nach links */
+.moewe-flug .moewe { transform: scaleX(-1); }
+.geschenk-fall { position: absolute; z-index: 51; pointer-events: none; animation: geschenk-fall 1.5s ease-in forwards; }
+.geschenk-fall img { width: 100%; display: block; }
+@keyframes geschenk-fall { from { transform: translateY(0) rotate(0); opacity: 1; } 80% { opacity: 1; } to { transform: translateY(22vh) rotate(18deg); opacity: 0; } }
+
+/* Kopf der Tafel: Titel darf schrumpfen, Knöpfe bleiben immer innerhalb */
+.tafel-kopf { min-width: 0; }
+.tafel-kopf h2 { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tafel-kopf-knoepfe { flex: none; }
+.tafel { min-width: 270px; max-width: calc(100% - 4vw); }
+/* ---------- Zwergenrat: Klassenabstimmung über eine Streitfrage ---------- */
+.rat-inhalt.abstimmung { display: flex; flex-direction: column; gap: 1.4vw; overflow-y: auto; }
+.abstimm-seiten { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2vw; }
+.abstimm-seite { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px; text-align: center; border-top: 10px solid #4f8a2a; }
+.abstimm-seite.contra { border-top-color: #b4532a; }
+.abstimm-seite h3 { margin: 0; font-size: clamp(26px, 2.6vw, 52px); }
+.abstimm-zahl { font-family: var(--titel); font-size: clamp(80px, 9vw, 180px); line-height: 1; }
+.rat .stimmen .rund { width: clamp(56px, 4vw, 90px); height: clamp(56px, 4vw, 90px); font-size: clamp(30px, 2.4vw, 50px); }
+.rat-inhalt.abstimmung .rat-regeln { overflow: visible; }
+.knopf.gross { font-size: clamp(24px, 2vw, 40px); padding: 14px 40px; }
+.streitfragen-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.streitfragen-liste .knopf { text-align: left; font-size: 19px; white-space: normal; }
+.rat-ergebnis { display: flex; align-items: center; gap: 18px; justify-content: center; }
+.rat-ergebnis-bild { width: min(260px, 30vw); }
+.rat-ergebnis-bild img { width: 100%; display: block; }
+.fenster.rat-entschieden { max-width: min(900px, 94vw); }
+.stamm-mitglied .seiten-marke { margin-left: auto; }
+.rats-reise li.board { border-style: dashed; }
+.stamm-code .klein { color: var(--tinte-hell); }
+@media (max-height: 820px) { .abstimm-zahl { font-size: clamp(64px, 12vh, 120px); } .abstimm-seite { padding: 10px; } }
+.abschluss-stand { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 0; font-size: 24px; }
+.abschluss-stand > span > b { font-family: var(--titel); font-size: 34px; }
+
+.abstimm-seite .seiten-marke .seiten-bild { width: clamp(40px, 3.6vw, 72px); height: clamp(40px, 3.6vw, 72px); }
+.abstimm-seite .seiten-marke { font-size: clamp(16px, 1.3vw, 26px); }
+
+/* Boardtexte dürfen in ihren Karten umbrechen. */
+.rat-inhalt > *, .stamm-inhalt > *, .stamm-karte, .stamm-mitglied > *,
+.abstimm-seite { min-width: 0; }
+.rat-frage, .stamm-frage, .stamm-karte h3, .abstimm-seite h3 { overflow-wrap: anywhere; hyphens: auto; }
+.rat-frage { flex-shrink: 0; line-height: 1.2; }
+.rat .leiste { flex-wrap: wrap; }
+.rat .leiste .titel { min-width: 0; overflow-wrap: anywhere; }
+.stamm-mitglied .seiten-marke { flex-shrink: 0; }
+
+.stamm-nummer { font-family: var(--titel); font-size: clamp(22px, 1.5vw, 30px); }
