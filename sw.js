@@ -2,12 +2,12 @@
    Beim Start werden Seiten, Code und Schriften gespeichert (gut 600 KB); die Bilder lädt die Seite danach
    gestaffelt nach. Danach läuft die App auch ohne WLAN.
    Nach jeder Änderung an der App die Versionsnummer erhöhen. */
-const VERSION = 'zwergeninsel-v34';
+const VERSION = 'zwergeninsel-grammatik-v1';
 const KERN = [
   './', 'index.html', 'insel.html', 'karten.html', 'lehrkraft.html', 'manifest.webmanifest',
-  'css/spiel.css', 'css/insel.css',
+  'css/spiel.css', 'css/insel.css', 'css/grammatik.css',
   'schrift/schrift.css', 'schrift/insel-text-400.woff', 'schrift/insel-text-700.woff', 'schrift/insel-titel-400.woff',
-  'js/data.js', 'js/data-k2.js', 'js/data-k3.js', 'js/data-mehr.js', 'js/data-spiel.js', 'js/data-bau.js', 'js/data-klasse.js', 'js/data-vielfalt.js', 'js/pass.js', 'js/gemeinsam.js', 'js/app.js', 'js/insel.js',
+  'js/data.js', 'js/data-bau.js', 'js/data-grammatik.js', 'js/pass.js', 'js/gemeinsam.js', 'js/engines.js', 'js/app.js', 'js/insel-szene.js', 'js/insel.js',
   'bilder/app-icon.png', 'bilder/app-icon-192.png',
 ];
 

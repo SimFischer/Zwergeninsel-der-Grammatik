@@ -110,31 +110,6 @@
     return a;
   };
   ZI.zufall = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  /* Weg durch den Zwergenrat: 1–8 im Stamm (iPad), 9–11 am Board */
-  ZI.RATS_REISE = ['Streitfrage', 'Pro / Contra', 'Partner', 'Tafel', 'Stamm trifft sich', 'Diskussion', 'Stammes\u00ADentscheidung', 'Ergebnis melden', 'Klassen\u00ADabstimmung', 'Siegerseite', 'Gebäude'];
-  ZI.ratsReise = (aktiv) => h('ol', { class: 'rats-reise', 'aria-label': 'Ablauf des Zwergenrats' },
-    ZI.RATS_REISE.map((name, i) => h('li', { class: (i + 1 < aktiv ? 'fertig' : i + 1 === aktiv ? 'jetzt' : '') + (i >= 8 ? ' board' : ''), 'aria-current': i + 1 === aktiv ? 'step' : null },
-      h('span', { class: 'rr-nr' }, String(i + 1)), h('span', { class: 'rr-name' }, name))));
-  /* PRO/CONTRA-Marke mit Bild-Slot (rolle-pro.png / rolle-contra.png), sonst Schriftzug */
-  ZI.seitenMarke = (seite, cls) => h('span', { class: 'seiten-marke ' + seite + ' ' + (cls || '') },
-    ZI.bildOder('rolle-' + seite, '', null, 'seiten-bild'), h('b', null, seite === 'pro' ? 'Pro' : 'Contra'));
-  /* Bausteine mischen, sodass der Satz NIE schon fertig oder fast fertig dasteht.
-     loesungen: Liste richtiger Reihenfolgen. Höchstens die Hälfte (bei 3 Bausteinen: einer) darf schon richtig liegen. */
-  ZI.mischenSatz = function (teile, loesungen) {
-    const n = teile.length;
-    if (n < 2) return teile.slice();
-    const erlaubt = n <= 3 ? 1 : Math.floor(n / 2);
-    let beste = null; let besteTreffer = Infinity;
-    for (let versuch = 0; versuch < 200; versuch++) {
-      const a = ZI.mischen(teile);
-      if (loesungen.some((l) => l.join('|') === a.join('|'))) continue;
-      const treffer = Math.max(...loesungen.map((l) => a.filter((w, i) => l[i] === w).length));
-      if (treffer <= erlaubt) return a;
-      if (treffer < besteTreffer) { beste = a; besteTreffer = treffer; }
-    }
-    return beste || teile.slice().reverse();
-  };
-
   /* Speicher, der nie abstürzt (privater Modus o. ä.) */
   ZI.speicher = {
     lesen(k, ersatz) { try { const v = localStorage.getItem(k); return v === null ? ersatz : JSON.parse(v); } catch (e) { return ersatz; } },
