@@ -161,7 +161,7 @@
   }
   // Sechs kleine Vormachschritte im ursprünglichen Meisterinnenfenster.
   function vorRunde(i, tiefe) {
-    const s = Z.STOLLEN[i], q = Z.POOLS[s.id][tiefe][0]; let phase = 0;
+    const s = Z.STOLLEN[i], q = Z.ziehen(Z.POOLS[s.id][tiefe].filter(q => q.band === 'sicherung'), 1, 'demo-' + s.id + '-' + tiefe)[0]; let phase = 0;
     const beispiel = h('div'), blase = h('div', { class: 'vormach-blase', role: 'status', 'aria-live': 'polite' });
     const dots = h('div', { class: 'fortschritt tutorial-punkte' });
     const shortRule = q.explanation.split('. ')[0] + (q.explanation.split('. ')[0].endsWith('.') ? '' : '.');
@@ -185,8 +185,8 @@
   }
   function begin(i, tiefe, beispielId = null) {
     if (!test && (!Z.stollenFrei(stand, i) || tiefe > stand.t[i] + 1)) return halle();
-    const s = Z.STOLLEN[i], pool = Z.POOLS[s.id][tiefe].filter(q => q.id !== beispielId && (q.type !== 'repair' || test || Z.hatGebaeude(stand, 'werkstatt')));
-    runde = { i, tiefe, pool: Z.ziehen(pool, Z.REGELN.aufgaben, s.id + '-' + tiefe), n: 0, richtig: 0, kombo: 0, review: [], misch: false };
+    const s = Z.STOLLEN[i], quelle = Z.POOLS[s.id][tiefe], demo = quelle.find(q => q.id === beispielId), pool = quelle.filter(q => q.id !== beispielId && (!demo || q.family !== demo.family));
+    runde = { i, tiefe, pool: Z.rundeZiehen(pool, s.id + '-' + tiefe), n: 0, richtig: 0, kombo: 0, review: [], misch: false };
     frage();
   }
   function frage() {
@@ -301,7 +301,7 @@
   }
   function misch(k) {
     const pool = Z.STOLLEN.filter(s => (k === null || s.kapitel === k) && stand.t[s.index] >= 1).flatMap(s => Z.POOLS[s.id][1]);
-    runde = { i: 0, k, tiefe: 1, pool: Z.ziehen(pool, 9, 'misch-' + k), n: 0, richtig: 0, kombo: 0, review: [], misch: true }; frage();
+    runde = { i: 0, k, tiefe: 1, pool: Z.rundeZiehen(pool, 'misch-' + k), n: 0, richtig: 0, kombo: 0, review: [], misch: true }; frage();
   }
   function lehrer() {
     shell('Lehrkraftbereich', h('div', { class: 'lk-raster' },

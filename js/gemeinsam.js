@@ -141,7 +141,7 @@
     let rest = [...new Set(alt.rest || [])].filter((x) => eindeutig.has(x));
     const zuletzt = new Set(alt.zuletzt || []);
     const letzteFaelle = new Set(verlauf.faelle || []);
-    const fall = (x) => (eindeutig.get(x).id || '').split(':')[1] || x;
+    const fall = (x) => eindeutig.get(x).family || (eindeutig.get(x).id || '').split(':')[1] || x;
     const gezogen = [];
     while (gezogen.length < Math.min(anzahl, ids.length)) {
       if (!rest.length) rest = ZI.mischen(ids.filter((x) => !gezogen.includes(x)));
@@ -158,6 +158,20 @@
     verlauf.faelle = [...(verlauf.faelle || []), ...gezogen.map(fall)].slice(-12);
     ZI.sitzung.schreiben('zi-aufgaben', verlauf);
     return gezogen.map((x) => eindeutig.get(x));
+  };
+
+  /* Neun Aufgaben mit drei Sicherungen, vier Kernaufgaben, zwei Transfers.
+     Innerhalb einer Runde erscheint jeder Kontext nur einmal. */
+  ZI.rundeZiehen=function(pool,name){
+    const folge=['sicherung','kern','sicherung','kern','transfer','kern','sicherung','kern','transfer'];
+    if(!pool.some(q=>q.band))return ZI.ziehen(pool,9,name);
+    const verwendet=new Set(),result=[];
+    for(const band of folge){
+      const passend=pool.filter(q=>q.band===band&&!verwendet.has(q.family));
+      const q=ZI.ziehen(passend.length?passend:pool.filter(q=>q.band===band&&!result.includes(q)),1,name+'-'+band)[0];
+      if(q){result.push(q);verwendet.add(q.family);}
+    }
+    return result;
   };
 
   /* ---------- iPad-Bildschirmtastatur: freie Höhe merken ---------- */

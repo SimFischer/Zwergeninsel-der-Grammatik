@@ -17,7 +17,9 @@ Jeder erstmalig bestandene Grundstollen bringt ein Material. Tiefe 2–4 bringt 
 
 `js/data-bau.js` enthält Baugrenzen, Belohnungen, Stollen und leicht änderbare Zwergenbedingungen. Die gemeinsame Insel verwendet Material pro eingestelltem Kind. Persönliche Grundstollen erlauben auch selbstständiges Weiterspielen; Inselbotschaften können gemeinsame Freischaltungen übertragen.
 
-`js/data-grammatik.js` enthält Regeln, Tiefenziele und kleine **vorläufige Beispielvorlagen**, aus denen zwölf Varianten pro Tiefe entstehen. Dies sind keine endgültigen Aufgabenpools. Zusätzliche Aufgaben lassen sich an `ZI.POOLS[stollenId][tiefe]` anhängen. Schema und Lösungstypen stehen im Dateikopf und in `js/engines.js`. Die zehn Engines sind Auswahl, Wortmarkierung, Gruppenmarkierung, Sortieren, Zuordnen, Lücke, Formenbildung, Satzbausteine, Fehlerreparatur und geführter Transfer. Transfer ist ausdrücklich geführt und hat hinterlegte zulässige Lösungen, keine automatische Freitextbewertung.
+`js/data-grammatik.js` enthält Regeln, Quellenkennungen und das gemeinsame Datenschema. Die drei Kapiteldateien unter `js/grammatik/` liefern **1.980 Aufgaben/Varianten: 36 pro Tiefe, 180 pro Stollen**. Grundlage sind die analysierten Unterrichtsmaterialien (Wortschmiede, Raumfahrt, Wettbewerb/Detektive, Schatzsuche/Wikinger und Satzbau). Jede Aufgabe trägt Quelle, Aufgabenmuster, Bearbeitungsart und Kontextfamilie. Die Quellen selbst bleiben außerhalb des öffentlichen Repositories. Beim kleineren Pronomenbereich wurden zusätzliche materialnahe Beispiele entwickelt.
+
+Eine Runde mischt drei Sicherungen, vier Kernaufgaben und zwei Transfers ohne doppelte Kontextfamilien; das vorgeführte Beispiel bleibt außerhalb der Runde. Die zehn Engines bleiben erhalten. Formenbildung, Lücken und Transfer unterstützen mehrere beschriftete Eingabefelder sowie geführte Auswahl. Zulässige Formvarianten und Wortstellungen werden ausdrücklich hinterlegt. Offene Textwirkung wird durch begrenzte Auswahl mit mehreren Lösungen geprüft. Fehlerjagden nennen die exakt geprüfte Fehlerzahl. Es gibt keine automatische Bewertung beliebiger freier Texte.
 
 ## Pässe und Geräte
 

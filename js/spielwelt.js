@@ -69,17 +69,19 @@
   };
   Z.demoDarstellung=function(q,phase){
     const el=h('div',{class:'vormach-liste demo-beispiel','aria-label':'Vorgemachtes Beispiel'});
-    if(q.tokens){
+    if(q.context)el.append(h('p',{class:'g-context'},q.context));
+    if(q.fields){q.fields.forEach(f=>el.append(h('div',{class:'vormach-zeile'+(phase>=4?' gut':'')},f.label+': ',phase>=4?f.solutions.join(' / '):'…')));
+    }else if(q.tokens){
       el.append(h('div',{class:'demo-satz'},...q.tokens.map((word,i)=>h('span',{class:phase>=2&&q.answer.includes(i)?(phase>=4?(q.type==='repair'?'demo-fehler':'demo-richtig'):'demo-fokus'):''},word))));
       if(q.type==='repair'&&phase>=4)el.append(h('div',{class:'vormach-zeile gut'},q.solutions[0]));
     }else if(q.type==='choice'){
-      const wrong=q.options.find(a=>a!==q.answer);
-      q.options.forEach(option=>el.append(h('div',{class:'vormach-zeile'+(phase>=4&&option===q.answer?' gut':phase===2&&option===wrong?' schlecht':'')},option,phase>=4&&option===q.answer?icon.haken():null)));
+      const wrong=q.options.find(a=>!(q.acceptedAnswers||[q.answer]).includes(a));
+      q.options.forEach(option=>el.append(h('div',{class:'vormach-zeile'+(phase>=4&&(q.acceptedAnswers||[q.answer]).includes(option)?' gut':phase===2&&option===wrong?' schlecht':'')},option,phase>=4&&(q.acceptedAnswers||[q.answer]).includes(option)?icon.haken():null)));
     }else if(q.items){
       q.items.forEach((item,i)=>el.append(h('div',{class:'vormach-zeile'+(phase===2&&i===0?' demo-fokus':'')+(phase>=4?' gut':'')},h('span',null,item),phase>=4?h('b',null,q.answer[i]):null)));
     }else if(q.type==='order'){
       const indices=phase>=4?q.answers[0]:q.parts.map((_,i)=>i).reverse();
-      el.append(h('div',{class:'demo-satz'+(phase>=4?' demo-richtig':phase===2?' demo-fokus':'')},...indices.map(i=>h('span',null,q.parts[i]))));
+      el.append(h('div',{class:'demo-satz'+(phase>=4?' demo-richtig':phase===2?' demo-fokus':'')},...indices.map((i,pos)=>h('span',null,phase>=4&&pos===0?q.parts[i][0].toUpperCase()+q.parts[i].slice(1):phase>=4&&q.lowercaseParts?.includes(i)?q.parts[i][0].toLowerCase()+q.parts[i].slice(1):q.parts[i]))));
     }else el.append(h('div',{class:'vormach-zeile'+(phase>=4?' gut':phase===2?' demo-fokus':'')},phase>=4?q.solutions[0]:'…'));
     return el;
   };

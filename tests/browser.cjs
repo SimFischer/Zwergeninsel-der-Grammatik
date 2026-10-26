@@ -19,7 +19,7 @@ const {chromium}=require('playwright');
   const page=await context.newPage();page.setDefaultTimeout(8000);page.on('pageerror',e=>errors.push(e.message));
   const click=name=>page.getByRole('button',{name,exact:true}).evaluate(b=>b.click());
   async function shot(name){await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))));await page.screenshot({path:path.join(shots,name+'.png')});}
-  async function capture(){await page.evaluate(()=>{const orig=ZI.aufgabeAnsicht;ZI.aufgabeAnsicht=q=>{window.testQuestion=q;return orig(q);};});}
+  async function capture(){await page.evaluate(()=>{const orig=ZI.aufgabeAnsicht;ZI.aufgabeAnsicht=q=>{window.testQuestion=q;return orig(q);};const draw=ZI.rundeZiehen;ZI.rundeZiehen=(pool,name)=>{const round=draw(pool,name),q=pool.find(q=>q.type===window.forceType);return q?[q,...round.filter(p=>p.family!==q.family)].slice(0,9):round;};});}
   async function drain(){let n=0;while(await page.locator('.freischaltung-fenster').count()){assert.ok(n++<30);await page.locator('.freischaltung-fenster').getByRole('button',{name:'Weiter',exact:true}).evaluate(b=>b.click());}}
   async function tutorial(){
    assert.equal(await page.locator('.vormach').count(),1);
@@ -40,7 +40,8 @@ const {chromium}=require('playwright');
   }
   async function fill(){await page.evaluate(()=>{
    const q=window.testQuestion,el=document.querySelector('.g-engine');
-   if(q.type==='choice')[...el.querySelectorAll('button')].find(b=>b.textContent===q.answer).click();
+   if(q.fields)q.fields.forEach((f,i)=>{const row=el.querySelector('[data-field-index="'+i+'"]'),control=row.querySelector('input,select');if(control)control.value=f.solutions[0];else [...row.querySelectorAll('button')].find(b=>b.textContent===f.solutions[0]).click();});
+   else if(q.type==='choice')[...el.querySelectorAll('button')].find(b=>b.textContent===q.answer).click();
    else if(['mark','groups','repair'].includes(q.type)){const cs=[...el.querySelector('.g-tokens').children];q.answer.forEach(i=>cs[i].click());if(q.type==='repair')el.querySelector('textarea').value=q.solutions[0];}
    else if(['sort','match'].includes(q.type))el.querySelectorAll('select').forEach((s,i)=>s.value=q.answer[i]);
    else if(q.type==='order')for(const i of q.answers[0])[...el.querySelectorAll('.g-tokens button')].find(b=>b.textContent===q.parts[i]).click();
@@ -51,9 +52,9 @@ const {chromium}=require('playwright');
    await fill();await click('Prüfen');assert.ok(await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).isVisible());await click('Nächste Aufgabe');
   }
   async function round(i,d,correct){
-   await enter(i,d);for(let j=0;j<9;j++)await answer(j<correct);
+   await enter(i,d);for(let j=0;j<9;j++){if(i===8&&d===4&&j===1)await shot('vier-angaben');await answer(j<correct);}
    assert.equal(await page.locator('.geschafft-fenster').count(),1);
-   if(i===0&&d===1){assert.match(await page.locator('.geschafft-fenster .gross-bild img').getAttribute('src'),/holz/);await shot('belohnung');}
+   if(i===0&&d===1&&await page.evaluate(()=>!ZI.sitzung.lesen('zi-test',false))){assert.match(await page.locator('.geschafft-fenster .gross-bild img').getAttribute('src'),/holz/);await shot('belohnung');}
    await page.locator('.geschafft-fenster').getByRole('button',{name:'Zurück zum Eingang',exact:true}).evaluate(b=>b.click());await drain();
   }
   await page.goto(base+'/index.html');await shot('start');await click('Neuer Zwerg');
@@ -100,10 +101,11 @@ const {chromium}=require('playwright');
   console.log('UI: nächstes Bauziel, kurze Serieneingabe, Tagesraster, Dubletten und Sechsbuchstaben-Botschaft geprüft.');
   await page.goto(base+'/index.html');await page.getByRole('button',{name:/Weiterspielen als/}).click();await click('Lieferung');await click('Fertig für heute');await click('Pass notiert – fertig für heute');assert.equal(await page.evaluate(()=>sessionStorage.getItem('zi-grammatik-aktiv')),null);
   // In jeder Engine gilt: selbst vier Fehler und eine offene Lösung schalten nicht weiter.
-  const specs=await page.evaluate(()=>{const seen=new Set(),r=[];for(const s of ZI.STOLLEN)for(let d=1;d<=5;d++){const type=ZI.POOLS[s.id][d][0].type;if(!seen.has(type)){seen.add(type);r.push({i:s.index,d,type});}}return r;});
+  const specs=await page.evaluate(()=>{const seen=new Set(),r=[];for(const s of ZI.STOLLEN)for(let d=1;d<=5;d++){for(const q of ZI.POOLS[s.id][d]){const type=q.type;if(!seen.has(type)){seen.add(type);r.push({i:s.index,d,type});}}}return r;});
   await page.evaluate(()=>{ZI.sitzung.schreiben('zi-test',true);ZI.sitzung.schreiben('zi-grammatik-aktiv',new ZI.Stand({id:1,welt:11}).code());});
+  assert.equal(specs.length,10);
   for(const spec of specs){
-   await page.goto(base+'/index.html?ort=halle');await capture();await enter(spec.i,spec.d);
+   await page.goto(base+'/index.html?ort=halle');await capture();await page.evaluate(t=>window.forceType=t,spec.type);await enter(spec.i,spec.d);assert.equal(await page.evaluate(()=>testQuestion.type),spec.type);if(spec.type==='form')await shot('formtabelle');
    const qid=await page.locator('[data-question]').getAttribute('data-question');
    for(let j=0;j<4;j++)await click('Prüfen');await click('Hilfe');
    assert.equal(await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).isVisible(),false,spec.type);
@@ -114,7 +116,8 @@ const {chromium}=require('playwright');
   const rendered=await page.evaluate(()=>{
    let n=0;for(const qs of Object.values(ZI.POOLS))for(const pool of Object.values(qs))for(const q of pool){
     const v=ZI.aufgabeAnsicht(q),el=v.el;document.body.append(el);
-    if(q.type==='choice')[...el.querySelectorAll('button')].find(b=>b.textContent===q.answer).click();
+    if(q.fields)q.fields.forEach((f,i)=>{const row=el.querySelector('[data-field-index="'+i+'"]'),control=row.querySelector('input,select');if(control)control.value=f.solutions[0];else [...row.querySelectorAll('button')].find(b=>b.textContent===f.solutions[0]).click();});
+   else if(q.type==='choice')[...el.querySelectorAll('button')].find(b=>b.textContent===q.answer).click();
     else if(['mark','groups','repair'].includes(q.type)){const c=[...el.querySelector('.g-tokens').children];q.answer.forEach(i=>c[i].click());if(q.type==='repair')el.querySelector('textarea').value=q.solutions[0];}
     else if(['sort','match'].includes(q.type))el.querySelectorAll('select').forEach((s,i)=>s.value=q.answer[i]);
     else if(q.type==='order')for(const i of q.answers[0])[...el.querySelectorAll('.g-tokens button')].find(b=>b.textContent===q.parts[i]).click();
@@ -123,7 +126,11 @@ const {chromium}=require('playwright');
     for(let phase=0;phase<6;phase++){const demo=ZI.demoDarstellung(q,phase);el.append(demo);demo.remove();}
     v.disable();el.remove();n++;
    }return n;
-  });assert.equal(rendered,660);
+  });assert.equal(rendered,1980);
+  for(let i=0;i<11;i++){
+   for(const d of (i===8?[1,3,4,5]:[1,3,5])){await page.goto(base+'/index.html?ort=halle');await capture();await round(i,d,9);}
+   console.log('Materialpools: Wiederholung und Tiefen 3/5 für Stollen '+(i+1)+' geprüft.');
+  }
   // Vollständige Meisterrunde im Testmodus darf den Pass nicht verändern.
   await page.goto(base+'/index.html?ort=halle');await capture();const before=await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv',''));await round(0,5,9);assert.equal(await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv','')),before);
   await click('Inselbotschaft');await page.getByRole('textbox',{name:'Inselbotschaft',exact:true}).fill(word);await click('Runen lesen');await drain();assert.equal(await page.evaluate(()=>ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv','')).coreTotal()),0);
@@ -132,7 +139,7 @@ const {chromium}=require('playwright');
   await op.goto(base+'/index.html');await op.evaluate(()=>navigator.serviceWorker.ready);await op.reload();await op.waitForFunction(()=>!!navigator.serviceWorker.controller);
   assert.ok(await op.evaluate(async()=>!!await caches.match('js/spielwelt.js')));
   await offline.setOffline(true);await op.reload();assert.ok(await op.getByRole('button',{name:'Neuer Zwerg',exact:true}).isVisible());await op.goto(base+'/insel.html');assert.equal(await op.locator('.bau.gebaut').count(),1);await offline.close();
-  console.log('UI: 660 Varianten samt Tutorials, Testmodus, Passbestätigung, Botschaft und Offlinebetrieb geprüft.');
+  console.log('UI: 1980 Varianten samt Tutorials, Testmodus, Passbestätigung, Botschaft und Offlinebetrieb geprüft.');
   await page.emulateMedia({reducedMotion:'no-preference'});await capture();await enter(0,1);await page.locator('.uebergang').waitFor({state:'visible'});await page.locator('.uebergang').waitFor({state:'detached'});await shot('aufgabe');
   assert.equal(await page.evaluate(()=>window.audioStarts),0);assert.equal(await page.locator('audio,video').count(),0);assert.deepEqual(audioRequests,[]);assert.deepEqual(errors,[]);
   console.log('UI: ursprüngliche Stollenanimation, iPad-Querformat und Lautlosigkeit geprüft. Keine Browserfehler.');

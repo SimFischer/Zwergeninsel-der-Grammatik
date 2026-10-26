@@ -1,33 +1,9 @@
-/* Kleine, bewusst vorläufige Beispielpools: 12 lexikalische Varianten je Tiefe.
-   Aufgaben sind reine Daten. Weitere Aufgaben können an POOLS[id][tiefe] angehängt werden.
-   answer bei Markieraufgaben = vollständige Liste der Token-Indizes (ab 0).
-   answers bei Satzpuzzles = alle akzeptierten Reihenfolgen der Baustein-Indizes. */
+/* Unterrichtsbasierte Grammatikpools. Q-Kennungen entsprechen dem Quellenverzeichnis
+   der Materialbasis vom 26.10.2026. Quellen bleiben außerhalb des Repositories.
+   Jede Aufgabe nennt Muster A01–A42, Quelle, Bearbeitungsart und Aufgabenfamilie.
+   Die Kapiteldateien füllen die bestehenden POOLS; es gibt keine Sonderfälle in app.js. */
 (function(){
   const Z=window.ZI;
-  const lex=[
-    ['Hund','Hunde','der','er','schnell','schneller','läuft','lief','gelaufen','laufen'],
-    ['Katze','Katzen','die','sie','leise','leiser','schleicht','schlich','geschlichen','schleichen'],
-    ['Kind','Kinder','das','es','fröhlich','fröhlicher','singt','sang','gesungen','singen'],
-    ['Vogel','Vögel','der','er','laut','lauter','ruft','rief','gerufen','rufen'],
-    ['Maus','Mäuse','die','sie','klein','kleiner','sitzt','saß','gesessen','sitzen'],
-    ['Pferd','Pferde','das','es','ruhig','ruhiger','steht','stand','gestanden','stehen'],
-    ['Fuchs','Füchse','der','er','flink','flinker','springt','sprang','gesprungen','springen'],
-    ['Ente','Enten','die','sie','langsam','langsamer','schwimmt','schwamm','geschwommen','schwimmen'],
-    ['Schaf','Schafe','das','es','weich','weicher','schläft','schlief','geschlafen','schlafen'],
-    ['Wolf','Wölfe','der','er','wild','wilder','rennt','rannte','gerannt','rennen'],
-    ['Eule','Eulen','die','sie','wach','wacher','sieht','sah','gesehen','sehen'],
-    ['Schwein','Schweine','das','es','munter','munterer','frisst','fraß','gefressen','fressen'],
-  ].map(([n,pl,art,pro,adj,kom,v,past,part,inf])=>({n,pl,art,pro,adj,kom,v,past,part,inf}));
-  const freundinnen=['Mila','Nora','Lina','Ada','Nele','Ida','Emma','Lea','Sara','Ayla','Thea','Clara'];
-  const namen=['Mila','Ben','Nora','Emil','Lina','Omar','Ada','Paul','Nele','Tarek','Ida','Leon'];
-  const upper=s=>s[0].toUpperCase()+s.slice(1);
-  const adjForm=x=>x.adj.endsWith('e')?x.adj:x.adj+'e';
-  const compounds=['Hundehütte','Katzenhütte','Kinderhütte','Vogelhütte','Mäusehütte','Pferdehütte','Fuchshütte','Entenhütte','Schafhütte','Wolfshütte','Eulenhütte','Schweinehütte'];
-  const mc=(prompt,answer,options)=>({type:'choice',prompt,answer,options:[...new Set([answer,...options])]});
-  const mark=(prompt,text,answer,type='mark')=>({type,prompt,tokens:text.split(' '),answer});
-  const input=(type,prompt,answer)=>({type,prompt,solutions:Array.isArray(answer)?answer:[answer]});
-  const repair=(prompt,text,answer,solutions)=>({type:'repair',prompt,tokens:text.split(' '),answer,solutions:Array.isArray(solutions)?solutions:[solutions]});
-  const order=(prompt,parts,answers)=>({type:'order',prompt,parts,answers});
   const rules={
     nomen:['Nomen bezeichnen zum Beispiel Dinge, Lebewesen und Gefühle. Man schreibt sie groß. Ein Artikel kann helfen: der Mut.','der Hund – die Hunde'],
     verben:['Verben haben einen Infinitiv und Personalformen. Zeitformen bestehen manchmal aus mehreren Wörtern.','laufen – er läuft – er lief – er ist gelaufen – er wird laufen'],
@@ -41,113 +17,92 @@
     satzbau:['Im Aussagesatz steht das gebeugte Verb an zweiter Satzgliedstelle. Wortgruppen können dabei aus mehreren Wörtern bestehen. Die Umstellprobe hilft.','Heute | baut | Mila | eine Hütte. Mila | baut | heute | eine Hütte.'],
     verbinden:['Und und aber verbinden zum Beispiel Hauptsätze. Weil leitet einen Nebensatz ein. Dort steht das gebeugte Verb am Ende. Ein Komma trennt Haupt- und Nebensatz.','Mila bleibt drinnen, weil es regnet. Weil es regnet, bleibt Mila drinnen.'],
   };
-  Z.LERNZIELE={
-    nomen:['Nomen erkennen','Plural und Artikel','Zusammensetzungen','Großschreibung und Wortbildung','Fehlerjagd und Transfer'],
-    verben:['Verben und Infinitiv','Personalformen','Vier Zeitformen','Unregelmäßige und mehrteilige Formen','Verbformen reparieren'],
-    adjektive:['Adjektive erkennen','Steigerung','Passende Endungen','Wortwahl und Wirkung','Texte überarbeiten'],
-    pronomen:['Nomen ersetzen','Bezüge finden','Possessivformen','Unklare Bezüge','Textüberarbeitung'],
-    faelle:['Fälle und Fragen','Formen verändern','Vollständige Wortgruppen','Kasus im Kontext','Kasus reparieren'],
-    subjekt:['Einfache Subjekte','Vollständige Gruppen','Wechselnde Positionen','Kongruenz','Transfer'],
-    praedikat:['Einteiliges Prädikat','Trennbare Verben','Mehrteilige Prädikate','Satzklammer','Vollständige Prädikate'],
-    objekte:['Dativ und Akkusativ','Vollständige Gruppen','Mehrere Objekte','Ergänzungen zum Verb','Objekte unterscheiden'],
-    adverbialien:['Ort, Zeit, Grund, Art und Weise','Genaue Angaben','Mehrere Angaben','Sinnvoll ergänzen','Textgestaltung'],
-    satzbau:['Satzarten und Satzbau','Umstellprobe','Feldermodell','Varianten und Wirkung','Satzpuzzles reparieren'],
-    verbinden:['Hauptsätze verbinden','Haupt- und Nebensatz','Nebensatz umstellen','Passende Verknüpfung','Textüberarbeitung'],
-  };
-  const templates={
-    nomen:[
-      x=>mark('Markiere alle Nomen.',`${upper(x.art)} ${x.n} ist ${x.adj} .`,[1]),
-      x=>input('form',`Bilde den Plural mit Artikel: ${x.art} ${x.n} → …`,['die '+x.pl]),
-      (x,j)=>mc(`Welches zusammengesetzte Nomen bezeichnet eine Hütte für ${x.pl}?`,compounds[j],[x.n+' Hütte',compounds[j].toLowerCase()]),
-      x=>mark('Markiere alle Nomen. Auch eine Tätigkeit kann als Nomen gebraucht sein.',`Beim ${upper(x.inf)} ist ${x.art} ${x.n} ${x.adj} .`,[1,4],'groups'),
-      x=>repair('Markiere die falsch geschriebenen Nomen. Schreibe den ganzen Satz richtig.',`${upper(x.art)} ${x.n.toLowerCase()} findet eine kiste .`,[1,4],`${upper(x.art)} ${x.n} findet eine Kiste.`),
-    ],
-    verben:[
-      x=>mc(`Wie lautet der Infinitiv zu „${x.v}“?`,x.inf,[x.past,x.part]),
-      x=>input('form',`Setze das Verb in die passende Personalform: ${upper(x.art)} ${x.n} … (${x.inf}).`,x.v),
-      (x,j)=>{const aux=[0,1,6,7,9].includes(j)?'ist':'hat'; const s=[`${upper(x.art)} ${x.n} ${x.v}.`,`${upper(x.art)} ${x.n} ${x.past}.`,`${upper(x.art)} ${x.n} ${aux} ${x.part}.`,`${upper(x.art)} ${x.n} wird ${x.inf}.`];return {type:'match',prompt:'Verbinde die Sätze mit ihren Zeitformen.',items:s,categories:['Präsens','Präteritum','Perfekt','Futur I'],answer:['Präsens','Präteritum','Perfekt','Futur I']};},
-      x=>mark('Markiere die ganze Verbform im Futur I.',`${upper(x.art)} ${x.n} wird morgen ${x.inf} .`,[2,4],'groups'),
-      x=>repair('Markiere die falsche Verbform. Schreibe den Satz im Präteritum richtig.',`${upper(x.art)} ${x.n} ${x.inf} gestern .`,[2],`${upper(x.art)} ${x.n} ${x.past} gestern.`),
-    ],
-    adjektive:[
-      x=>mark('Markiere das Adjektiv.',`${upper(x.art)} ${x.n} ist ${x.adj} .`,[3]),
-      x=>input('form',`Steigere: ${x.adj} → … → am …sten. Schreibe nur den Komparativ.`,x.kom),
-      x=>input('gap',`Ergänze die Form von „${x.adj}“: das … Tier`,adjForm(x)),
-      x=>mc(`„${upper(x.art)} ${x.n} ist ${x.adj}.“ Vergleiche: „… ist ${x.kom}.“ Was drückt die zweite Form aus?`,'einen Vergleich',['die Vergangenheit','eine Mehrzahl']),
-      x=>input('transfer',`Überarbeite die Wortgruppe „das Tier“ mit „${x.adj}“. Schreibe die ganze Wortgruppe.`,`das ${adjForm(x)} Tier`),
-    ],
-    pronomen:[
-      x=>mc(`Ersetze „${x.art} ${x.n}“: ${upper(x.art)} ${x.n} ${x.v}.`,x.pro,['er','sie','es']),
-      (x,j)=>mark('Markiere das Bezugswort von „Es“.',`${namen[j]} sieht das Kind . Es winkt .`,[3]),
-      (x,j)=>input('gap',`Die Kiste gehört ${namen[j]}. ${namen[j]} sagt: „Das ist … Kiste.“`,'meine'),
-      (x,j)=>mc(`${freundinnen[j]} trifft Hilda. Sie trägt eine Tasche. Welcher Satz zeigt eindeutig, dass Hilda die Tasche trägt?`,'Hilda trägt eine Tasche.',[`${freundinnen[j]} trägt eine Tasche.`,'Sie trägt sie.']),
-      (x,j)=>input('transfer',`Mache den Bezug eindeutig. Ersetze nur „Sie“ durch Hilda: „${freundinnen[j]} sieht Hilda. Sie trägt das Buch.“`,`${freundinnen[j]} sieht Hilda. Hilda trägt das Buch.`),
-    ],
-    faelle:[
-      (x,j)=>{const pairs=[['Wer oder was?','Nominativ'],['Wessen?','Genitiv'],['Wem?','Dativ'],['Wen oder was?','Akkusativ']];const p=pairs[j%4];return mc(`Welcher Fall passt zur Frage „${p[0]}“? Beispielwort: ${x.art} ${x.n}.`,p[1],['Nominativ','Genitiv','Dativ','Akkusativ']);},
-      (x,j)=>input('form',`Setze „der Hund“ in den Dativ: ${namen[j]} hilft … .`,'dem Hund'),
-      (x,j)=>mark('Markiere die vollständige Wortgruppe im Dativ.',`${namen[j]} hilft dem kleinen Kind .`,[2,3,4],'groups'),
-      (x,j)=>mc(`„${namen[j]} sucht den kleinen Hund.“ In welchem Fall steht „den kleinen Hund“?`,'Akkusativ',['Dativ','Nominativ','Genitiv']),
-      (x,j)=>repair('Markiere das falsche Wort. „Helfen“ verlangt hier den Dativ. Schreibe den Satz richtig.',`${namen[j]} hilft den Kind .`,[2],`${namen[j]} hilft dem Kind.`),
-    ],
-    subjekt:[
-      (x,j)=>mark('Markiere das Subjekt. Frage: Wer oder was?',`${namen[j]} findet eine Kiste .`,[0]),
-      x=>mark('Markiere das vollständige Subjekt.',`Das kleine Tier ${x.v} .`,[0,1,2],'groups'),
-      (x,j)=>mark('Markiere das Subjekt, auch wenn es hinten steht.',`Heute fehlt ${namen[j]} .`,[2]),
-      x=>input('gap',`Achte auf die Zahl: Die ${x.pl} … (${x.inf}).`,x.inf),
-      (x,j)=>input('transfer',`Ersetze das Subjekt und passe das Verb an: „${namen[j]} findet die Kiste.“ Beginne mit „Die Kinder“.`,'Die Kinder finden die Kiste.'),
-    ],
-    praedikat:[
-      x=>mark('Markiere das Prädikat.',`${upper(x.art)} ${x.n} ${x.v} .`,[2]),
-      (x,j)=>mark('Markiere beide Teile des Prädikats.',`${namen[j]} räumt die Kiste auf .`,[1,4],'groups'),
-      (x,j)=>mark('Markiere das vollständige Prädikat im Perfekt.',`${namen[j]} hat die Kiste geöffnet .`,[1,4],'groups'),
-      (x,j)=>({type:'sort',prompt:`Satzklammer: ${namen[j]} wird morgen die Kiste öffnen. Ordne die Bausteine.`,items:['wird','morgen','die Kiste','öffnen'],categories:['linke Klammer','Mittelfeld','rechte Klammer'],answer:['linke Klammer','Mittelfeld','Mittelfeld','rechte Klammer']}),
-      (x,j)=>mark('Markiere alle Verbteile. Es sind drei.',`${namen[j]} wird die Kiste öffnen können .`,[1,4,5],'groups'),
-    ],
-    objekte:[
-      (x,j)=>mc(`„${namen[j]} hilft dem Kind.“ Welche Frage findet das Objekt?`,'Wem hilft '+namen[j]+'?',['Wer hilft?','Wann hilft '+namen[j]+'?']),
-      (x,j)=>mark('Markiere das vollständige Akkusativobjekt.',`${namen[j]} sucht den kleinen Hund .`,[2,3,4],'groups'),
-      (x,j)=>mark('Markiere beide vollständigen Objekte.',`${namen[j]} gibt dem Kind einen Ball .`,[2,3,4,5],'groups'),
-      (x,j)=>input('gap',`Ergänze das Dativobjekt „das Kind“: ${namen[j]} schenkt … ein Buch.`,'dem Kind'),
-      (x,j)=>({type:'match',prompt:`${namen[j]} gibt dem Kind im Garten einen Ball. Verbinde die Gruppen mit ihrer Funktion.`,items:['dem Kind','im Garten','einen Ball'],categories:['Dativobjekt','Ortsangabe','Akkusativobjekt'],answer:['Dativobjekt','Ortsangabe','Akkusativobjekt']}),
-    ],
-    adverbialien:[
-      (x,j)=>{const a=[['im Garten','Ort'],['am Morgen','Zeit'],['wegen des Regens','Grund'],['mit großer Sorgfalt','Art und Weise']][j%4];return mc(`„${namen[j]} arbeitet ${a[0]}.“ Was gibt „${a[0]}“ an?`,a[1],['Ort','Zeit','Grund','Art und Weise']);},
-      (x,j)=>mark('Markiere die vollständige Zeitangabe.',`${namen[j]} liest am frühen Morgen .`,[2,3,4],'groups'),
-      (x,j)=>mark('Markiere die Ortsangabe und die Zeitangabe.',`Heute liest ${namen[j]} im Garten .`,[0,3,4],'groups'),
-      (x,j)=>input('gap',`Ergänze die Ortsangabe. Nutze genau „im Garten“: ${namen[j]} arbeitet … .`,'im Garten'),
-      (x,j)=>input('transfer',`Baue einen Satz mit diesen Angaben: ${namen[j]} / liest / heute / im Garten. Beginne mit „Heute“.`,`Heute liest ${namen[j]} im Garten.`),
-    ],
-    satzbau:[
-      (x,j)=>mc(`„Findet ${namen[j]} die Kiste?“ Welche Satzart ist das?`,'Fragesatz',['Aussagesatz','Aufforderungssatz']),
-      (x,j)=>order('Baue einen Aussagesatz. Es gibt mehrere richtige Reihenfolgen.',[namen[j],'findet','heute','die Kiste'],[[0,1,2,3],[0,1,3,2],[2,1,0,3],[2,1,3,0],[3,1,0,2],[3,1,2,0]]),
-      (x,j)=>({type:'match',prompt:`Heute wird ${namen[j]} die Kiste öffnen. Ordne im Feldermodell zu.`,items:['Heute','wird',namen[j]+' die Kiste','öffnen'],categories:['Vorfeld','linke Klammer','Mittelfeld','rechte Klammer'],answer:['Vorfeld','linke Klammer','Mittelfeld','rechte Klammer']}),
-      (x,j)=>input('transfer',`Betone die Zeitangabe. Stelle „${namen[j]} liest heute im Garten.“ so um, dass „Heute“ am Anfang steht.`,`Heute liest ${namen[j]} im Garten.`),
-      (x,j)=>repair('Die Verbposition stimmt nicht. Markiere das gebeugte Verb und schreibe den Satz richtig. Beginne mit „Heute“.',`Heute ${namen[j]} die Kiste öffnet .`,[4],`Heute öffnet ${namen[j]} die Kiste.`),
-    ],
-    verbinden:[
-      (x,j)=>input('gap',`Verbinde mit „und“: ${namen[j]} liest … Hilda malt.`,'und'),
-      (x,j)=>order('Baue Hauptsatz und weil-Nebensatz.',[namen[j]+' bleibt drinnen,','weil','es','regnet.'],[[0,1,2,3]]),
-      (x,j)=>order('Stelle den weil-Nebensatz nach vorn. Achte auf das Verb direkt nach dem Nebensatz.', ['Weil es regnet,','bleibt',namen[j],'drinnen.'],[[0,1,2,3]]),
-      (x,j)=>mc(`Welcher Satz nennt einen Grund dafür, dass ${namen[j]} drinnen bleibt?`,`${namen[j]} bleibt drinnen, weil es regnet.`,[`${namen[j]} bleibt drinnen, obwohl die Sonne scheint.`,`${namen[j]} bleibt drinnen und liest.`]),
-      (x,j)=>repair('Markiere das Verb im weil-Nebensatz. Schreibe den ganzen Satz mit richtiger Verbstellung.',`${namen[j]} bleibt drinnen, weil regnet es .`,[4],`${namen[j]} bleibt drinnen, weil es regnet.`),
-    ],
-  };
+  Z.LERNZIELE={};
   Z.WISSEN=rules;
-  Z.POOLS={};
-  Z.STOLLEN.forEach(s=>{
-    Z.POOLS[s.id]={};
-    for(let tiefe=1;tiefe<=5;tiefe++){
-      Z.POOLS[s.id][tiefe]=lex.map((x,j)=>{
-        const q=templates[s.id][tiefe-1](x,j);
-        q.id=`${s.id}-${tiefe}:${j}`;
-        q.hints=[`Achte auf „${Z.LERNZIELE[s.id][tiefe-1]}“.`,rules[s.id][0],q.type==='groups'?'Suche die vollständige Gruppe oder alle getrennten Teile.':`Nutze dieses Beispiel als Muster: ${rules[s.id][1]}`];
-        if(['mark','groups'].includes(q.type))q.hints[2]='Gesucht sind '+q.answer.length+' Wörter. Eines davon ist „'+q.tokens[q.answer[0]]+'“.';
-        if(q.type==='repair')q.hints[2]='Markiere '+q.answer.length+' Fehlerstelle(n). Deine Verbesserung beginnt mit „'+q.solutions[0].split(' ').slice(0,2).join(' ')+'“.';
-        if(q.type==='order')q.hints[2]='Eine mögliche Reihenfolge beginnt so: '+q.answers[0].slice(0,2).map(i=>q.parts[i]).join(' ');
-        if(q.solutions&&q.type!=='repair')q.hints[2]='Die gesuchte Formulierung beginnt mit „'+q.solutions[0].split(' ')[0]+'“. Prüfe die Regel noch einmal.';
-        q.explanation=rules[s.id][0]; return q;
-      });
+  Z.POOLS=Object.fromEntries(Z.STOLLEN.map(s=>[s.id,Object.fromEntries([1,2,3,4,5].map(d=>[d,[]]))]));
+  Z.QUELLEN={
+    Q001:'Wortarten sicher unterscheiden und verwenden · Aufgaben 1–9',
+    Q003:'Haupt- und Nebensatz · Aufgaben 1–3',
+    Q005:'Satzarten · Satzschlusszeichen und Fragen',
+    Q006:'Satzglieder · Limonade und Umstellprobe',
+    Q008:'Das Prädikat als Satzkern',
+    Q011:'Ferienbericht mit grammatischen Vorgaben',
+    Q013:'Das Objekt · Kletterwettkampf und Junior-Detektive',
+    Q015:'Adverbialien · fehlende Angaben bei der Schatzsuche',
+    Q017:'Genaue Angaben · Zeitreise zu den Wikingern',
+    Q018:'Auf den Spuren von Ivar · Wortspeicher',
+    Q022:'Finite und infinite Verbformen · fachlich berichtigt',
+    Q025:'Wir üben die vier Fälle · Seeräuber, Insel, Seeungeheuer',
+    Q026:'Mini-Übungsheft Subjekt und Prädikat · Lösung fachlich geprüft',
+    Q028:'Grammatiktest · sechs Aufgabenbereiche',
+    Q032:'Der Roboter baut einen Computer · Rollenwechsel',
+    Q035:'Passende Nomen verwenden · Präzisierung statt bloßer Synonymie',
+    Q036:'Wirkung von Adjektiven · Lasse und Jana',
+    Q037:'Adjektive verändern · Stimmung, Formen und Steigerung',
+    Q038:'Ball im Nachbargarten · Stimmung überarbeiten',
+    Q041:'Wortspeicher Adjektive',
+    Q042:'Die vier Fälle · Frageprobe und Einsetzen',
+    Q043:'Kasus und Pronomen · Folienbilder 2–5, Weltraum und Zauberring',
+    Q045:'Sherlock-Holmes-Fehlerjagd mit Fehlerzahl',
+    Q047:'Die Stadt im Mittelalter · Nomen großschreiben',
+    Q049:'Wortarten-/Kasus-Stadt-Land-Fluss',
+    Q050:'Deklinationstabelle Schiff, Tisch und Blume',
+    Q051:'Kasusbeispiel Hund/Mann · Bedeutung durch Formen',
+    Q052:'Satzfragmente vervollständigen',
+    Q056:'Umstellprobe und Satzklammer',
+    Q059:'Schwache, starke und gemischte Verben',
+    Q061:'Trennbare und nicht trennbare starke Verben',
+    Q063:'Das Subjekt · Grammatikwerkstatt',
+    Q064:'Das Akkusativobjekt · Grammatikwerkstatt',
+    Q077:'Lösungen Grammatikwerkstatt · fachlich geprüft',
+    Q082:'Verbkarten: lachen, kneifen, nennen und weitere',
+    Q084:'Verbkarten: trennbare und nicht trennbare Verben',
+    Q126:'Feldermodell, Umstellprobe und Ersatzprobe · Folien 2–15',
+  };
+  const prefix={nomen:'NOM',verben:'VER',adjektive:'ADJ',pronomen:'PRO',faelle:'KAS',subjekt:'SUB',praedikat:'PRA',objekte:'OBJ',adverbialien:'ADV',satzbau:'SAT',verbinden:'VERBIND'};
+  const tok=s=>s.match(/[^\s,.;:!?]+|[,.;:!?]/gu)||[];
+  function annotation(s){
+    const tokens=[],answer=[],groups=[];
+    for(const part of s.split(/(\{[^{}]+\})/g)){
+      const selected=part.startsWith('{')&&part.endsWith('}'),group=[];
+      for(const word of tok(selected?part.slice(1,-1):part)){
+        if(selected&&!/^[,.;:!?]$/.test(word)){answer.push(tokens.length);group.push(tokens.length);}
+        tokens.push(word);
+      }
+      if(group.length)groups.push(group);
     }
-  });
+    return {tokens,answer,targetGroups:groups};
+  }
+  const sol=v=>Array.isArray(v)?v:[v];
+  const mc=(prompt,answer,options,context)=>({type:'choice',prompt,context,answer:sol(answer)[0],acceptedAnswers:sol(answer),options:[...new Set([...sol(answer),...options])],multipleSolutions:sol(answer).length>1});
+  const mark=(prompt,s,type='mark')=>({type,prompt,...annotation(s)});
+  const fields=(type,prompt,rows,context)=>({type,prompt,context,fields:rows.map(r=>({label:r[0],solutions:sol(r[1]),...(r[2]?{options:r[2]}:{})})),multipleSolutions:rows.some(r=>sol(r[1]).length>1)});
+  const input=(type,prompt,solutions,context)=>({type,prompt,context,solutions:sol(solutions),multipleSolutions:sol(solutions).length>1});
+  const assign=(type,prompt,items,answer,categories=[...new Set(answer)],context)=>({type,prompt,items,answer,categories,context});
+  const order=(prompt,parts,answers,context)=>({type:'order',prompt,parts,answers,context,multipleSolutions:answers.length>1});
+  function repair(s,solution,count,prompt='Markiere die fehlerhaften Wörter und schreibe den Satz richtig.'){
+    const data=annotation(s);if(data.answer.length!==count)throw Error('Fehlerzahl passt nicht: '+s);
+    const correct=tok(solution);if(correct.length!==data.tokens.length)throw Error('Reparatur verändert Tokenzahl: '+s);
+    const changed=correct.flatMap((word,i)=>word!==data.tokens[i]?[i]:[]);
+    if(JSON.stringify(changed)!==JSON.stringify(data.answer))throw Error('Fehlerstellen passen nicht zur Verbesserung: '+s);
+    return {type:'repair',prompt:'Fehlerjagd: '+count+' Wortfehler. '+prompt,...data,solutions:[solution],errorCount:count,corrections:changed.map(i=>({index:i,from:data.tokens[i],to:correct[i]}))};
+  }
+  function add(stollen,tiefe,band,muster,quellen,family,q,hints,explanation,art='materialnah entwickelt'){
+    const pool=Z.POOLS[stollen][tiefe];
+    q.id=prefix[stollen]+'_T'+tiefe+'_'+q.type.toUpperCase()+'_'+muster+'_'+String(pool.length+1).padStart(3,'0');
+    if(q.type==='order')q.lowercaseParts=q.parts.flatMap((p,i)=>/^(Der|Die|Das|Den|Dem|Ein|Eine|Einen|Einem)( |$)/.test(p)?[i]:[]);
+    q.stollen=stollen;q.tiefe=tiefe;q.band=band;q.pattern=muster;q.family=stollen+':'+family;
+    q.source={quellen:sol(quellen),muster,bearbeitung:art};q.hints=hints;q.explanation=explanation;
+    if(hints.length!==3||hints.some(h=>!h))throw Error('Drei fachliche Hilfen fehlen: '+q.id);
+    pool.push(q);return q;
+  }
+  Z.G={tok,annotation,mc,mark,fields,input,assign,order,repair,add,sol,upper:s=>s.charAt(0).toUpperCase()+s.slice(1)};
+  // Innerhalb jeder Tiefe bleibt derselbe Kompetenzkern erhalten.
+  for(const s of Z.STOLLEN)Z.LERNZIELE[s.id]=[
+    'Mit klaren Beispielen erkennen und anwenden',
+    'Formen und Varianten sicher unterscheiden',
+    'Selbstständig im Satz anwenden',
+    'Größere Zusammenhänge untersuchen',
+    'Fehler aufspüren und Sprache überarbeiten',
+  ];
 })();

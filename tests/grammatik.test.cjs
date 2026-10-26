@@ -1,14 +1,14 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const ctx=vm.createContext({window:{}});
-for(const f of ['data.js','data-bau.js','data-grammatik.js','pass.js','engines.js'])vm.runInContext(fs.readFileSync('js/'+f,'utf8'),ctx,{filename:f});
+for(const f of ['data.js','data-bau.js','data-grammatik.js','grammatik/wortschmiede.js','grammatik/satzwerkstatt.js','grammatik/satzbaumeister.js','pass.js','engines.js'])vm.runInContext(fs.readFileSync('js/'+f,'utf8'),ctx,{filename:f});
 const Z=ctx.window.ZI;
 const plain=x=>JSON.parse(JSON.stringify(x));
-test('11 Stollen, 55 Tiefen, zehn Engines und konsistente Beispielpools',()=>{
+test('11 Stollen, 55 Tiefen, zehn Engines und konsistente materialbasierte Pools',()=>{
  assert.equal(Z.STOLLEN.length,11);assert.equal(Object.keys(Z.ENGINES).length,10);const types=new Set();
  for(const s of Z.STOLLEN)for(let d=1;d<=5;d++){
-  const pool=Z.POOLS[s.id][d];assert.ok(pool.length>=10);assert.equal(new Set(pool.map(q=>q.id)).size,pool.length);
+  const pool=Z.POOLS[s.id][d];assert.ok(pool.length>=30);assert.equal(new Set(pool.map(q=>q.id)).size,pool.length);
   for(const q of pool){types.add(q.type);const e=Z.ENGINES[q.type];assert.ok(e,q.type);assert.equal(q.hints.length,3);assert.ok(q.explanation);
-   const answer=q.type==='repair'?{mark:q.answer,text:q.solutions[0]}:q.type==='order'?q.answers[0]:q.solutions?q.solutions[0]:q.answer;
+   const answer=q.type==='repair'?{mark:q.answer,text:q.solutions[0]}:q.type==='order'?q.answers[0]:q.fields?q.fields.map(f=>f.solutions[0]):q.solutions?q.solutions[0]:q.answer;
    assert.equal(e.check(q,answer),true,q.id+' Musterlösung');
    const wrong=['mark','groups','order','sort','match'].includes(q.type)?[]:q.type==='repair'?{mark:[],text:'???'}:'???';
    assert.equal(e.check(q,wrong),false,q.id+' Fehlantwort');
