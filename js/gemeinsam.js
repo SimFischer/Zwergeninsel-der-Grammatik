@@ -28,6 +28,11 @@
     el.replaceChildren(...kinder.flat(Infinity).filter((k) => k !== null && k !== undefined && k !== false));
   };
 
+  /* Wie h(): optionale Kinder beim Anhängen nicht in sichtbaren Text umwandeln. */
+  ZI.anhaengen = function(el, ...kinder) {
+    el.append(...kinder.flat(Infinity).filter(k => k !== null && k !== undefined && k !== false));
+  };
+
   /* Bild mit Platzhalter: Fehlt die Datei noch, erscheint ein beschrifteter Rahmen. */
   ZI.bild = function bild(datei, alt, cls) {
     /* datei darf auch eine Liste sein: dann wird das erste vorhandene Bild genommen */

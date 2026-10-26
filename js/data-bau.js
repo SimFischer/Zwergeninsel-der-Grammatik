@@ -48,3 +48,26 @@
   ];
   Z.ZWERGE.forEach((z,i)=>{ if(i>=4){ z.bedingung=Z.ZWERG_REGELN[i-4][0]; z.unlock=Z.ZWERG_REGELN[i-4][1]; } });
 })();
+/* Gemeinsame Fortschrittsbilder für Halle, Erfolg und Album. */
+(function(){
+  const Z=window.ZI;
+  Z.ROHSTOFF=[{datei:'holz',name:'Holz'},{datei:'stein',name:'Stein'},{datei:'eisen',name:'Eisen'}];
+  const icons=['buch-offen','hammer','schleifstein','runenplatte','runenplatte','laterne','amboss','eisen-roh','wegweiser','runenplatte','schmiede-axt-werkstueck'];
+  Z.STOLLEN.forEach((s,i)=>{s.icon=icons[i];s.rohstoff=Z.ROHSTOFF[i%3];});
+  Z.rang=s=>{
+    const punkte=s.t.reduce((n,t)=>n+t,0)+s.kronenTotal();
+    const r=Z.RAENGE.filter(r=>punkte>=r.ab).slice(-1)[0],next=Z.RAENGE[r.index+1];
+    return {...r,punkte,next};
+  };
+  Z.ABZEICHEN=[
+    {id:'funke',name:'Erster Funke',text:'Dein erster Grundstollen.',test:s=>s.coreTotal()>=1},
+    ...Z.KAPITEL.map((name,k)=>({id:'k'+(k+1),name,text:'Alle Grundstollen des Kapitels geschafft.',test:s=>s.kapitelFertig(k)})),
+    {id:'gems',name:'Edelsteinfinder',text:'Zehn Edelsteine gesammelt.',test:s=>s.gems()>=10},
+    {id:'fehler',name:'Tiefenforscher',text:'In einem Stollen Tiefe 3 erreicht.',test:s=>s.t.some(t=>t>=3)},
+    {id:'krone1',name:'Erste Stollenkrone',text:'Einen Stollen bis Tiefe 5 gemeistert.',test:s=>s.kronenTotal()>=1},
+    {id:'krone5',name:'Kronensammler',text:'Fünf Stollenkronen gesammelt.',test:s=>s.kronenTotal()>=5},
+    {id:'freunde',name:'Willkommen zu Hause',text:'Acht Zwerge sind zurück.',test:s=>s.freieZwerge().length>=8},
+    {id:'clan',name:'Der Clan ist zurück',text:'Alle zwölf Zwerge sind zurück.',test:s=>s.freieZwerge().length===12},
+  ];
+  Z.abzeichenFrei=s=>Z.ABZEICHEN.filter(a=>a.test(s));
+})();

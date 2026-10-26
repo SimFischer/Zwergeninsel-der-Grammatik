@@ -38,3 +38,10 @@ test('freiwillige Tiefen und Weltfreischaltungen verändern keine fremden Grundk
  const Z=bank(),s=new Z.Stand({id:1,welt:11});assert.equal(s.coreTotal(),0);assert.equal(Z.stollenFrei(s,9),true);assert.equal(Z.stollenFrei(s,10),false);
  assert.equal(s.abschliessen(9,1),true);assert.equal(Z.stollenFrei(s,10),true);assert.equal(s.t[0],0);
 });
+
+test('aktive Anwendung enthält weder Audioinitialisierung noch Lösungs-Überspringen',()=>{
+ const files=['js/app.js','js/insel.js','js/spielwelt.js','js/insel-szene.js','js/engines.js','js/gemeinsam.js'];
+ for(const f of files){const source=fs.readFileSync(f,'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'');assert.doesNotMatch(source,/\b(?:Audio|AudioContext|webkitAudioContext|SpeechSynthesisUtterance|MediaRecorder)\b|speechSynthesis|\.play\s*\(/,f);}
+ const app=fs.readFileSync('js/app.js','utf8');assert.ok(!app.includes('Mit Lösung abschließen'));assert.ok(app.includes('if (!erledigt || weitergedrueckt) return'));
+ assert.doesNotMatch(fs.readFileSync('js/insel.js','utf8'),/Unsere Grammatikinsel|Jede Karte trägt gleich viel|\/.*297/);
+});

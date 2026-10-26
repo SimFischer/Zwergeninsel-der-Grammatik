@@ -1,117 +1,141 @@
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 (async()=>{
- const root=process.cwd();const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.jpg':'image/jpeg','.woff':'font/woff'};
+ const root=process.cwd(),shots=path.join(require('node:os').tmpdir(),'grammatik-atmosphaere');fs.mkdirSync(shots,{recursive:true});
+ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.jpg':'image/jpeg','.woff':'font/woff'};
  const server=http.createServer((req,res)=>{let file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));if(file===root)file=path.join(root,'index.html');if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(e,b)=>{if(e){res.writeHead(404).end();return;}res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');res.end(b);});});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://localhost:'+server.address().port;
- let browser;const errors=[];
+ let browser;const errors=[],audioRequests=[];
  try{
-  console.log('Starte isolierten Testbrowser …');
   browser=await chromium.launch({timeout:20000,headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});
   const context=await browser.newContext({viewport:{width:1024,height:768},hasTouch:true,isMobile:true,reducedMotion:'reduce',serviceWorkers:'block'});
-  console.log('Testbrowser läuft.');
+  context.on('request',r=>{if(/\.(mp3|wav|ogg|m4a)(\?|$)/i.test(r.url()))audioRequests.push(r.url());});
+  await context.addInitScript(()=>{
+   window.audioStarts=0;
+   for(const key of ['Audio','AudioContext','webkitAudioContext','SpeechSynthesisUtterance','MediaRecorder'])if(window[key])window[key]=new Proxy(window[key],{construct(target,args){window.audioStarts++;return Reflect.construct(target,args);}});
+   if(window.speechSynthesis)window.speechSynthesis.speak=()=>window.audioStarts++;
+   const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){window.audioStarts++;return play.call(this);};
+  });
   const page=await context.newPage();page.setDefaultTimeout(8000);page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(base+'/index.html');await page.getByRole('button',{name:'Neuer Zwerg',exact:true}).click();await page.getByRole('button',{name:'Zur Schmiede',exact:true}).click();
-  assert.equal(await page.locator('.g-depth:not([disabled])').count(),3);
-  await page.evaluate(()=>{const orig=ZI.aufgabeAnsicht;ZI.aufgabeAnsicht=q=>{window.testQuestion=q;return orig(q);};});
-  async function answer(correct=true){
-   await page.evaluate(correct=>{
-    const q=window.testQuestion,el=document.querySelector('.g-engine');
-    if(!correct)return;
-    if(q.type==='choice'){[...el.querySelectorAll('button')].find(b=>b.textContent===q.answer).click();}
-    else if(['mark','groups','repair'].includes(q.type)){
-     const children=[...el.querySelector('.g-tokens').children];q.answer.forEach(i=>children[i].click());
-     if(q.type==='repair')el.querySelector('textarea').value=q.solutions[0];
-    }else if(['sort','match'].includes(q.type)){el.querySelectorAll('select').forEach((s,i)=>s.value=q.answer[i]);}
-    else if(q.type==='order'){for(const i of q.answers[0]){[...el.querySelectorAll('.g-tokens button')].find(b=>b.textContent===q.parts[i]).click();}}
-    else el.querySelector('input,textarea').value=q.solutions[0];
-   },correct);
-   await page.getByRole('button',{name:'Prüfen',exact:true}).evaluate(b=>b.click());
-   if(!correct)await page.getByRole('button',{name:'Mit Lösung abschließen',exact:true}).evaluate(b=>b.click());
-   await page.getByRole('button',{name:'Nächste Aufgabe',exact:true}).evaluate(b=>b.click());
+  const click=name=>page.getByRole('button',{name,exact:true}).evaluate(b=>b.click());
+  async function shot(name){await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))));await page.screenshot({path:path.join(shots,name+'.png')});}
+  async function capture(){await page.evaluate(()=>{const orig=ZI.aufgabeAnsicht;ZI.aufgabeAnsicht=q=>{window.testQuestion=q;return orig(q);};});}
+  async function drain(){let n=0;while(await page.locator('.freischaltung-fenster').count()){assert.ok(n++<30);await page.locator('.freischaltung-fenster').getByRole('button',{name:'Weiter',exact:true}).evaluate(b=>b.click());}}
+  async function tutorial(){
+   assert.equal(await page.locator('.vormach').count(),1);
+   assert.equal(await page.locator('.vormach .runden-info[open]').count(),0);
+   for(let i=0;i<5;i++)await page.locator('.vormach').getByRole('button',{name:'Weiter',exact:true}).evaluate(b=>b.click());
+   assert.ok(await page.locator('.vormach .demo-richtig,.vormach .gut').count()>0);
+   await click('Jetzt bist du dran!');
   }
-  async function round(index,depth,correctCount){
-   const chapter=await page.evaluate(i=>ZI.STOLLEN[i].kapitel,index);
-   await page.locator('.g-tabs button').nth(chapter).click();
-   const chapterIndex=await page.evaluate(i=>ZI.STOLLEN.filter(s=>s.kapitel===ZI.STOLLEN[i].kapitel).findIndex(s=>s.index===i),index);
-   await page.locator('.g-card').nth(chapterIndex).locator('.g-depth').nth(depth-1).click();
-   await page.getByRole('button',{name:'In den Stollen',exact:true}).click();
-   for(let j=0;j<9;j++)await answer(j<correctCount);
-   await page.getByRole('button',{name:'Zur Schmiede',exact:true}).click();
+  async function enter(i,d){
+   const k=await page.evaluate(i=>ZI.STOLLEN[i].kapitel,i);await page.getByRole('tab').nth(k).evaluate(b=>b.click());
+   await page.locator('[data-stollen="'+i+'"]').evaluate(b=>b.click());
+   if(await page.locator('.stufen-wahl').count()){
+    let depth=page.locator('.fenster [data-depth="'+d+'"]:visible').first();
+    if(!await depth.count()){await page.locator('.tiefen-ueben summary').evaluate(b=>b.click());depth=page.locator('.fenster [data-depth="'+d+'"]:visible').first();}
+    await depth.evaluate(b=>b.click());
+   }
+   await tutorial();
   }
-  for(let i=0;i<11;i++){await round(i,1,7);console.log('Grundstollen '+(i+1)+' geprüft.');}
-  let saved=await page.evaluate(()=>ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv','')));
-  assert.equal(saved.t.filter(t=>t>=1).length,11);console.log('UI: alle elf Grundstollen mit 7/9 bestanden, gesamte Freischaltkette erreichbar.');
+  async function fill(){await page.evaluate(()=>{
+   const q=window.testQuestion,el=document.querySelector('.g-engine');
+   if(q.type==='choice')[...el.querySelectorAll('button')].find(b=>b.textContent===q.answer).click();
+   else if(['mark','groups','repair'].includes(q.type)){const cs=[...el.querySelector('.g-tokens').children];q.answer.forEach(i=>cs[i].click());if(q.type==='repair')el.querySelector('textarea').value=q.solutions[0];}
+   else if(['sort','match'].includes(q.type))el.querySelectorAll('select').forEach((s,i)=>s.value=q.answer[i]);
+   else if(q.type==='order')for(const i of q.answers[0])[...el.querySelectorAll('.g-tokens button')].find(b=>b.textContent===q.parts[i]).click();
+   else el.querySelector('input,textarea').value=q.solutions[0];
+  });}
+  async function answer(first=true){
+   if(!first){await click('Prüfen');assert.equal(await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).isVisible(),false);}
+   await fill();await click('Prüfen');assert.ok(await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).isVisible());await click('Nächste Aufgabe');
+  }
+  async function round(i,d,correct){
+   await enter(i,d);for(let j=0;j<9;j++)await answer(j<correct);
+   assert.equal(await page.locator('.geschafft-fenster').count(),1);
+   if(i===0&&d===1){assert.match(await page.locator('.geschafft-fenster .gross-bild img').getAttribute('src'),/holz/);await shot('belohnung');}
+   await page.locator('.geschafft-fenster').getByRole('button',{name:'Zurück zum Eingang',exact:true}).evaluate(b=>b.click());await drain();
+  }
+  await page.goto(base+'/index.html');await shot('start');await click('Neuer Zwerg');
+  assert.equal(await page.locator('.karten-nr').count(),32);assert.equal(await page.locator('select').count(),0);await shot('karten');
+  await page.getByRole('button',{name:'Karte 1',exact:true}).click();await click('Ja, das ist meine Nummer');
+  assert.equal(await page.locator('.zwerg-karte').count(),12);assert.equal(await page.locator('.zwerg-karte:not(.gesperrt)').count(),4);
+  await page.getByRole('button',{name:'Hilda, Schmiedin',exact:true}).click();await shot('zwerge');await click('Diesen Zwerg nehmen');
+  assert.ok(await page.getByRole('heading',{name:'Willkommen auf der Insel!',exact:true}).isVisible());await shot('story');
+  for(let i=0;i<3;i++)await click('Weiter');await click('Los geht’s!');
+  assert.equal(await page.locator('.station[aria-disabled="false"]').count(),3);assert.ok(!/\bnull\b/.test(await page.locator('body').innerText()));await shot('halle');await capture();
+  // Eine ungelöste Aufgabe bleibt nach Fehlern UND nach der Lösungshilfe offen.
+  await page.locator('[data-stollen="0"]').click();await shot('tutorial');await tutorial();
+  const id=await page.locator('[data-question]').getAttribute('data-question');
+  for(let j=0;j<4;j++){await click('Prüfen');assert.equal(await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).isVisible(),false);}
+  await click('Hilfe');await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).evaluate(b=>b.click());assert.equal(await page.locator('[data-question]').getAttribute('data-question'),id);
+  assert.equal(await page.getByRole('button',{name:'Mit Lösung abschließen',exact:true}).count(),0);
+  await shot('hilfe');await fill();await click('Prüfen');await click('Nächste Aufgabe');assert.notEqual(await page.locator('[data-question]').getAttribute('data-question'),id);
+  await page.getByRole('button',{name:'Zurück',exact:true}).click();await click('Zur Schmiede');
+  console.log('UI: Originalauswahl, Story, sechs Tutorialschritte und kein Überspringen geprüft.');
+  for(let i=0;i<11;i++){await round(i,1,7);console.log('Grundstollen '+(i+1)+' samt Freischaltungen geprüft.');}
+  assert.equal(await page.evaluate(()=>ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv','')).coreTotal()),11);
   await round(0,2,7);await round(0,3,7);await round(0,4,7);await round(0,5,7);
   assert.equal(await page.evaluate(()=>ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv','')).t[0]),4);
-  await round(0,5,8);
-  const code=await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv',''));
-  assert.equal(await page.evaluate(()=>ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv','')).kronenTotal()),1);
-  await page.reload();await page.getByRole('button',{name:/Weiterspielen/}).click();assert.equal(await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv','')),code);
-  console.log('UI: Meisterstufe 7/9 abgelehnt, 8/9 bestanden; Pass nach Neuladen erhalten.');
-  // Jede Beispielaufgabe durch die echte Engine rendern und deren Eingabewert prüfen.
+  await round(0,5,8);assert.equal(await page.evaluate(()=>ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv','')).kronenTotal()),1);
+  console.log('UI: Material, Edelsteine, Krone, Bestehensgrenzen und Erfolgsfenster geprüft.');
+  const codes=await page.evaluate(()=>{const s=ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv',''));return Array.from({length:27},(_,i)=>new ZI.Stand({id:i+1,zwerg:s.zwerg,t:s.t}).lieferCode());});
+  await click('Lieferung');assert.match(await page.locator('[data-liefercode]').getAttribute('data-liefercode'),/^[A-Z2-9]{4}$/);await shot('lieferschein');
+  await click('Auf der Insel angekommen');assert.equal(await page.evaluate(()=>ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv','')).geliefert[0]),5);
+  await click('Persönlichen Zwergenpass ansehen');const code=await page.locator('.langpass-code').textContent();assert.match(code,/^G2-/);
+  await page.goto(base+'/index.html');await page.getByRole('button',{name:/Weiterspielen als/}).click();assert.equal(await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv','')),code);
+  for(const size of [{width:1024,height:768},{width:1180,height:820}]){await page.setViewportSize(size);assert.equal(await page.evaluate(()=>[...document.querySelectorAll('.halle-inhalt,.stollen,.leiste')].some(e=>e.scrollWidth>e.clientWidth+2)),false);}
+  await page.setViewportSize({width:1024,height:768});await click('Meine Insel');await page.waitForURL('**/insel.html?eigen=1');assert.equal(await page.locator('.bau.gebaut').count(),12);await shot('insel-fertig');
+  await page.goto(base+'/insel.html');assert.equal(await page.locator('h1').count(),0);assert.ok(await page.getByText('Noch 27 Material',{exact:true}).isVisible());assert.equal(await page.getByText('0 / 297',{exact:true}).count(),0);await shot('insel-bauziel');
+  await page.locator('.insel-grund').dispatchEvent('pointerdown');await page.waitForTimeout(5100);await page.locator('.insel-grund').dispatchEvent('pointerup');
+  await page.getByRole('spinbutton',{name:'Klassengröße',exact:true}).fill('27');await click('Klassengröße übernehmen');await click('Schließen');
+  await click('Lieferung eintragen');await shot('board-lieferung');
+  await page.keyboard.type(codes[0]);assert.ok(await page.getByText('Karte 1 · Hilda',{exact:true}).isVisible());
+  await page.keyboard.type(codes[0]);assert.ok(await page.getByText('Schon angekommen – nichts doppelt gezählt.',{exact:true}).isVisible());
+  for(const c of codes.slice(1))await page.keyboard.type(c);
+  assert.equal(await page.locator('.liefer-zelle.da').count(),27);
+  await click('Fertig – Dorf bauen!');assert.equal(await page.locator('.bau.gebaut').count(),12);
+  await click('Inselbotschaft');const word=await page.locator('.inselwort').textContent();assert.match(word,/^[A-Z]{6}$/);await shot('inselbotschaft');await click('Schließen');await page.reload();assert.equal(await page.locator('.bau.gebaut').count(),12);
+  assert.equal(await page.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('zi-grammatik-insel')).lieferungen).length),27);
+  console.log('UI: nächstes Bauziel, kurze Serieneingabe, Tagesraster, Dubletten und Sechsbuchstaben-Botschaft geprüft.');
+  await page.goto(base+'/index.html');await page.getByRole('button',{name:/Weiterspielen als/}).click();await click('Lieferung');await click('Fertig für heute');await click('Pass notiert – fertig für heute');assert.equal(await page.evaluate(()=>sessionStorage.getItem('zi-grammatik-aktiv')),null);
+  // In jeder Engine gilt: selbst vier Fehler und eine offene Lösung schalten nicht weiter.
+  const specs=await page.evaluate(()=>{const seen=new Set(),r=[];for(const s of ZI.STOLLEN)for(let d=1;d<=5;d++){const type=ZI.POOLS[s.id][d][0].type;if(!seen.has(type)){seen.add(type);r.push({i:s.index,d,type});}}return r;});
+  await page.evaluate(()=>{ZI.sitzung.schreiben('zi-test',true);ZI.sitzung.schreiben('zi-grammatik-aktiv',new ZI.Stand({id:1,welt:11}).code());});
+  for(const spec of specs){
+   await page.goto(base+'/index.html?ort=halle');await capture();await enter(spec.i,spec.d);
+   const qid=await page.locator('[data-question]').getAttribute('data-question');
+   for(let j=0;j<4;j++)await click('Prüfen');await click('Hilfe');
+   assert.equal(await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).isVisible(),false,spec.type);
+   await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).evaluate(b=>b.click());assert.equal(await page.locator('[data-question]').getAttribute('data-question'),qid);
+   await fill();await click('Prüfen');assert.equal(await page.getByRole('button',{name:'Nächste Aufgabe',exact:true,includeHidden:true}).isVisible(),true,spec.type);
+  }
+  console.log('UI: alle zehn Engines lassen ausschließlich selbst korrekt gelöste Aufgaben weiter.');
   const rendered=await page.evaluate(()=>{
-   let n=0;for(const pool of Object.values(ZI.POOLS))for(const qs of Object.values(pool))for(const q of qs){
+   let n=0;for(const qs of Object.values(ZI.POOLS))for(const pool of Object.values(qs))for(const q of pool){
     const v=ZI.aufgabeAnsicht(q),el=v.el;document.body.append(el);
     if(q.type==='choice')[...el.querySelectorAll('button')].find(b=>b.textContent===q.answer).click();
-    else if(['mark','groups','repair'].includes(q.type)){const children=[...el.querySelector('.g-tokens').children];q.answer.forEach(i=>children[i].click());if(q.type==='repair')el.querySelector('textarea').value=q.solutions[0];}
+    else if(['mark','groups','repair'].includes(q.type)){const c=[...el.querySelector('.g-tokens').children];q.answer.forEach(i=>c[i].click());if(q.type==='repair')el.querySelector('textarea').value=q.solutions[0];}
     else if(['sort','match'].includes(q.type))el.querySelectorAll('select').forEach((s,i)=>s.value=q.answer[i]);
     else if(q.type==='order')for(const i of q.answers[0])[...el.querySelectorAll('.g-tokens button')].find(b=>b.textContent===q.parts[i]).click();
     else el.querySelector('input,textarea').value=q.solutions[0];
-    if(!ZI.ENGINES[q.type].check(q,v.read()))throw Error('Engine-Eingabe '+q.id);v.disable();el.remove();n++;
+    if(!ZI.ENGINES[q.type].check(q,v.read()))throw Error(q.id);
+    for(let phase=0;phase<6;phase++){const demo=ZI.demoDarstellung(q,phase);el.append(demo);demo.remove();}
+    v.disable();el.remove();n++;
    }return n;
-  });assert.equal(rendered,660);console.log('UI: alle 660 vorläufigen Varianten in zehn Engines gerendert und bedient.');
-  const over=await page.evaluate(()=>[...document.querySelectorAll('.g-main,.g-card')].some(e=>e.scrollWidth>e.clientWidth+2));assert.equal(over,false,'Kein horizontaler Überlauf bei 1024×768');
-  await page.getByRole('button',{name:'Meine Insel',exact:true}).click();await page.waitForURL('**/insel.html?eigen=1');
-  assert.equal(await page.locator('.bau.gebaut').count(),12);
-  assert.equal(await page.locator('.bau.gebaut .fertig img').count(),12);
-  fs.mkdirSync(path.join(require('node:os').tmpdir(),'grammatik-qa'),{recursive:true});
-  await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))));
-  await page.screenshot({path:path.join(require('node:os').tmpdir(),'grammatik-qa','insel.png')});
-  await page.goto(base+'/insel.html');
-  // Board-Einstellungen über den vorhandenen versteckten Langdruck.
-  await page.getByRole('heading',{name:'Unsere Grammatikinsel'}).dispatchEvent('pointerdown');await page.waitForTimeout(5100);await page.getByRole('heading',{name:'Unsere Grammatikinsel'}).dispatchEvent('pointerup');
-  await page.getByRole('spinbutton',{name:'Klassengröße',exact:true}).fill('1');await page.getByRole('button',{name:'Klassengröße übernehmen',exact:true}).click();await page.getByRole('button',{name:'Schließen',exact:true}).click();
-  await page.getByRole('button',{name:'Lieferung eintragen',exact:true}).click();await page.getByRole('textbox',{name:'Grammatikpass',exact:true}).fill(code);await page.getByRole('button',{name:'Liefern',exact:true}).click();
-  await page.getByRole('textbox',{name:'Grammatikpass',exact:true}).fill(code);await page.getByRole('button',{name:'Liefern',exact:true}).click();
-  assert.ok(await page.getByText('Kein doppeltes Baumaterial.',{exact:false}).isVisible());
-  await page.getByRole('button',{name:'Schließen',exact:true}).click();await page.reload();assert.equal(await page.locator('.bau.gebaut').count(),12);
-  console.log('UI: persönliche Insel, verdeckte Verwaltung, Klassengröße und doppelte Lieferungen geprüft.');
-  await page.goto(base+'/index.html');await page.getByRole('button',{name:/Weiterspielen/}).click();
-  await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))));
-  await page.screenshot({path:path.join(require('node:os').tmpdir(),'grammatik-qa','schmiede.png')});
-  await page.getByRole('button',{name:'Zwergenpass / Lieferung',exact:true}).click();await page.getByRole('button',{name:'Fertig für heute',exact:true}).click();
-  assert.equal(await page.evaluate(()=>sessionStorage.getItem('zi-grammatik-aktiv')),null);
-  assert.deepEqual(errors,[],'Keine Browserfehler');console.log('UI: Abmelden löscht aktiven Schülerstand. Keine Browserfehler.');
-  await page.getByRole('button',{name:'Zum Start',exact:true}).click();
-  await page.locator('.logo').dispatchEvent('pointerdown');await page.waitForTimeout(5100);
-  await page.getByRole('button',{name:'Testmodus einschalten',exact:true}).click();await page.getByRole('button',{name:'← Zurück',exact:true}).click();
-  await page.getByRole('button',{name:'Neuer Zwerg',exact:true}).click();await page.getByRole('button',{name:'Zur Schmiede',exact:true}).click();
-  await page.evaluate(()=>{const orig=ZI.aufgabeAnsicht;ZI.aufgabeAnsicht=q=>{window.testQuestion=q;return orig(q);};});
-  const beforeTest=await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv',''));
-  await round(0,5,9);assert.equal(await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv','')),beforeTest);
-  console.log('UI: versteckter Testmodus öffnet Meistertiefe und speichert keine Testleistung.');
-  // Echte Service-Worker-Installation und Offline-Neuladen in einem frischen Profil.
-  const offline=await browser.newContext({viewport:{width:1024,height:768},serviceWorkers:'allow',reducedMotion:'reduce'});
-  const op=await offline.newPage();op.on('pageerror',e=>errors.push(e.message));
-  await op.goto(base+'/index.html');await op.evaluate(()=>navigator.serviceWorker.ready);
-  await op.reload();await op.waitForFunction(()=>!!navigator.serviceWorker.controller);
-  const cacheOk=await op.evaluate(async()=>{
-    const sw=await fetch('sw.js').then(r=>r.text());const src=sw.match(/const KERN = (\[[\s\S]*?\]);/)[1];
-    const paths=Function('return '+src)();for(const p of paths)if(!await caches.match(p))return false;return true;
-  });assert.equal(cacheOk,true,'Alle Offline-Kerndateien gespeichert');
-  await offline.setOffline(true);await op.reload();
-  await op.getByRole('button',{name:'Neuer Zwerg',exact:true}).click();await op.getByRole('button',{name:'Zur Schmiede',exact:true}).click();
-  assert.equal(await op.locator('.g-depth:not([disabled])').count(),3);
-  await op.goto(base+'/insel.html');assert.equal(await op.locator('.bau.gebaut').count(),1);
-  assert.deepEqual(errors,[]);await offline.close();console.log('Offline: Kern vollständig gespeichert; Schmiede und Insel ohne Netzwerk startfähig.');
-  await page.emulateMedia({reducedMotion:'no-preference'});
-  await page.locator('.g-tabs button').first().click();await page.locator('.g-card').first().locator('.g-depth').first().click();
-  await page.getByRole('button',{name:'In den Stollen',exact:true}).click();
-  await page.locator('.uebergang').waitFor({state:'visible'});await page.locator('.uebergang').waitFor({state:'detached'});
-  assert.ok(await page.getByRole('heading',{name:/Aufgabe 1 \/ 9/}).isVisible());
-  await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))));
-  await page.screenshot({path:path.join(require('node:os').tmpdir(),'grammatik-qa','aufgabe.png')});
-  assert.deepEqual(errors,[]);console.log('UI: vorhandene Ortswechsel-Animation ohne reduzierte Bewegung geprüft.');
+  });assert.equal(rendered,660);
+  // Vollständige Meisterrunde im Testmodus darf den Pass nicht verändern.
+  await page.goto(base+'/index.html?ort=halle');await capture();const before=await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv',''));await round(0,5,9);assert.equal(await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv','')),before);
+  await click('Inselbotschaft');await page.getByRole('textbox',{name:'Inselbotschaft',exact:true}).fill(word);await click('Runen lesen');await drain();assert.equal(await page.evaluate(()=>ZI.Stand.ausCode(ZI.sitzung.lesen('zi-grammatik-aktiv','')).coreTotal()),0);
+  // Echter Offlinebetrieb in einem frischen, kontrollierten Browserprofil.
+  const offline=await browser.newContext({viewport:{width:1024,height:768},serviceWorkers:'allow',reducedMotion:'reduce'}),op=await offline.newPage();op.on('pageerror',e=>errors.push(e.message));
+  await op.goto(base+'/index.html');await op.evaluate(()=>navigator.serviceWorker.ready);await op.reload();await op.waitForFunction(()=>!!navigator.serviceWorker.controller);
+  assert.ok(await op.evaluate(async()=>!!await caches.match('js/spielwelt.js')));
+  await offline.setOffline(true);await op.reload();assert.ok(await op.getByRole('button',{name:'Neuer Zwerg',exact:true}).isVisible());await op.goto(base+'/insel.html');assert.equal(await op.locator('.bau.gebaut').count(),1);await offline.close();
+  console.log('UI: 660 Varianten samt Tutorials, Testmodus, Passbestätigung, Botschaft und Offlinebetrieb geprüft.');
+  await page.emulateMedia({reducedMotion:'no-preference'});await capture();await enter(0,1);await page.locator('.uebergang').waitFor({state:'visible'});await page.locator('.uebergang').waitFor({state:'detached'});await shot('aufgabe');
+  assert.equal(await page.evaluate(()=>window.audioStarts),0);assert.equal(await page.locator('audio,video').count(),0);assert.deepEqual(audioRequests,[]);assert.deepEqual(errors,[]);
+  console.log('UI: ursprüngliche Stollenanimation, iPad-Querformat und Lautlosigkeit geprüft. Keine Browserfehler.');
+  console.log('Vorschaubilder: '+shots);
  }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

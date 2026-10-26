@@ -35,7 +35,7 @@
     if(q.type==='choice'){
       let val=null;
       const buttons=Z.mischen(q.options).map(text=>{
-        const b=h('button',{class:'g-option',type:'button','aria-pressed':'false',onclick:()=>{val=text;buttons.forEach(x=>{x.classList.toggle('aktiv',x===b);x.setAttribute('aria-pressed',String(x===b));});}},text);return b;
+        const b=h('button',{class:'option g-option',type:'button','aria-pressed':'false',onclick:()=>{val=text;buttons.forEach(x=>{x.classList.toggle('aktiv',x===b);x.setAttribute('aria-pressed',String(x===b));});}},text);return b;
       });box.append(...buttons);read=()=>val;
     }else if(['mark','groups','repair'].includes(q.type)){
       const selected=new Set();const tokens=h('div',{class:'g-tokens','aria-label':'Wörter im Satz'});

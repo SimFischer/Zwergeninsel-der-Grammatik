@@ -53,3 +53,40 @@ test('Alle zwölf Zwerge besitzen erreichbare Grammatikbedingungen',()=>{
  const s=new Z.Stand({id:1,t:Array(11).fill(5)});assert.equal(s.freieZwerge().length,12);
  assert.equal(new Z.Stand().freieZwerge().length,4);
 });
+
+test('ein vierstelliger Klassenschein codiert alle Gesamtstände kollisionsfrei und monoton',()=>{
+ const codes=new Set();
+ for(let id=1;id<=32;id++)for(let zwerg=1;zwerg<=12;zwerg++)for(let material=0;material<=11;material++)for(let schritte=0;schritte<=3*material;schritte++)for(let kronen=0;kronen<=Math.floor(schritte/3);kronen++){
+  const info={id,zwerg,material,schritte,kronen},code=Z.lieferung.kodiere(info);
+  assert.match(code,/^[A-HJ-NP-Z2-9]{4}$/);assert.ok(!codes.has(code));codes.add(code);assert.deepEqual(plain(Z.lieferung.lese(code)),info);
+ }
+ assert.equal(codes.size,359424);
+ const info={id:7,zwerg:2,material:4,schritte:6,kronen:1},a=Z.lieferung.anwenden(null,info);
+ assert.deepEqual(plain(Z.lieferung.anwenden(a,info)),plain(a));
+ assert.deepEqual(plain(Z.lieferung.anwenden(a,{...info,material:3,schritte:3})),plain(a));
+ assert.equal(Z.lieferung.anwenden(a,{...info,schritte:9,kronen:2}).kronen,2);
+ for(const bad of ['','ABC','ABCDE','0000','IIII'])assert.equal(Z.lieferung.lese(bad),null);
+ assert.equal(Z.lieferung.kodiere({...info,material:'4'}),null);
+});
+test('bestätigte Lieferstände überstehen den persönlichen Pass, neue Tiefen erzeugen neue Scheine',()=>{
+ const s=new Z.Stand({id:3,t:[2,1]});assert.equal(s.offeneLieferungen().length,2);
+ s.lieferungBestaetigen();const neu=Z.Stand.ausCode(s.code());
+ assert.equal(neu.geliefert[0],2);assert.equal(neu.offeneLieferungen().length,0);
+ neu.t[0]=3;assert.equal(neu.offeneLieferungen().length,1);
+ const g1=s.code('G1'),alt=Z.Stand.ausCode(g1);assert.deepEqual(plain(alt.t),plain(s.t));assert.equal(alt.offeneLieferungen().length,2);
+});
+test('Inselbotschaften bestehen aus genau sechs Buchstaben und lesen frühere lange Botschaften',()=>{
+ const words=new Set();for(let i=0;i<12;i++){
+  const code=Z.botschaft.kodiere(i);assert.match(code,/^[A-Z]{6}$/);words.add(code);assert.equal(Z.botschaft.lese(code.toLowerCase()),i);
+  assert.equal(Z.botschaft.lese('INSEL-'+new Z.Stand({welt:i}).code('G1').slice(3)),i);
+ }
+ assert.equal(words.size,12);assert.equal(Z.botschaft.lese('XXXXXX'),null);
+});
+
+test('G2 bewahrt auch gemischte Lieferstände über Gerätewechsel',()=>{
+ for(let j=0;j<100;j++){
+  const t=Array.from({length:11},(_,i)=>(j+i*7)%6),geliefert=t.map((v,i)=>(j*3+i)%(v+1));
+  const s=new Z.Stand({id:j%32+1,zwerg:j%12+1,welt:j%12,t,geliefert}),neu=Z.Stand.ausCode(s.code());
+  assert.deepEqual(plain(neu.t),t);assert.deepEqual(plain(neu.geliefert),geliefert);assert.equal(neu.code(),s.code());
+ }
+});
