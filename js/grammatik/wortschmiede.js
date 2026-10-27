@@ -17,32 +17,55 @@
     ['Traum','der','Träume','Der {Traum} handelt von einem {Zauberring}.','Nach dem {Traum} zeichnet {Leo} das {Raumschiff} und den magischen {Ring}.',['Traum','Reise'],'Traumreise','die','Der Traum ist so beängstigend, dass Leo erschrocken aufwacht. Welche Bezeichnung ist genauer?','Albtraum',['Tagtraum','Wunschtraum']],
   ].map(([n,a,p,s,l,parts,c,ca,frage,genau,falsch])=>({n,a,p,s,l,parts,c,ca,frage,genau,falsch}));
   const nominal=['Segeln','Hämmern','Pflanzen','Suchen','Wandern','Schwimmen','Lesen','Bauen','Lachen','Lernen','Sitzen','Träumen'];
+  const kurz=[
+    '{Schiffe} ankern.','Heute steht ein {Tisch} hier.','{Blumen} blühen am {Brunnen}.','Im {Hafen} suchen {Seeräuber} ihren {Hut}.',
+    'Hinter dem {Riff} liegt unsere {Insel}.','Plötzlich taucht ein {Seeungeheuer} auf.','Unter dem {Baum} lesen wir.',
+    'Ein {Haus}, ein {Garten} und ein {Brunnen} fehlen.','{Männer} und {Frauen} wandern gemeinsam zum {Hafen}.','{Kinder} lachen.',
+    'Bitte stell den {Stuhl} neben den {Tisch}.','Von einem {Traum} erzählt {Leo} beim {Frühstück}.',
+  ];
+  const lang=[
+    '{Seeräuber} verstauen {Seile}, {Segel} und {Kisten}.','Den {Tisch} trägt heute niemand.','Im {Garten} wachsen {Blumen}.',
+    'Morgen finden die {Seeräuber} unter {Brettern} einen {Hut}.','{Inseln} bleiben im {Nebel} verborgen.','Dieses {Seeungeheuer} ist sehr scheu.',
+    'Zwischen {Baum} und {Haus} wartet ein {Kind} mit einer {Karte}.','Heute schlafen wir alle im {Haus}.',
+    'Der {Mann} folgt einer {Spur} über die alte {Brücke}.','Ohne {Werkzeug} bauen die {Kinder} keine {Brücke}.',
+    '{Hilda} stellt {Stühle} und {Tische} bereit.','Nach dem {Traum} zeichnet {Leo} das {Raumschiff} und den magischen {Ring}.',
+  ];
+  const anspruchsvoll=[
+    'Beim {Segeln} bleiben wir still.','Zum {Hämmern} braucht {Hilda} einen {Hammer}.','Beim {Pflanzen} hilft das {Kind}.',
+    'Das {Suchen} kostet viel {Zeit}.','{Wandern} macht uns glücklich.','Nach dem {Schwimmen} liegt das {Handtuch} am {Strand}.',
+    'Zum {Lesen} öffnet {Leo} sein {Buch}.','Beim {Bauen} helfen {Männer}, {Frauen} und {Kinder}.','Ihr {Lachen} steckt alle an.',
+    'Ohne {Lernen} lösen wir dieses {Rätsel} nicht.','Beim {Sitzen} auf dem {Stuhl} erzählt die {Meisterin} eine {Geschichte}.',
+    'Vom {Träumen} möchte {Leo} seinem {Freund} berichten.',
+  ];
+  const kompositumPlural=['Segelschiffe','Holztische','Sonnenblumen','Seeräuber','Schatzinseln','Seeungeheuer','Apfelbäume','Baumhäuser','Seemänner','Königskinder','Schaukelstühle','Traumreisen'];
+  nomen.forEach((n,j)=>{n.s=kurz[j];n.l=lang[j];});
   for(let d=1;d<=5;d++)nomen.forEach((n,j)=>{
     const family='nomen-'+j;
     let q;
     if(d===5){
       const v=G.annotation(n.s),broken=v.tokens.map((w,i)=>v.answer.includes(i)?'{'+w.toLowerCase()+'}':w).join(' '),correct=v.tokens.join(' ').replace(/\s+([.,!?])/g,'$1');
-      q=repair(broken,correct,2,'Prüfe die Großschreibung der Nomen. Markiere beide Fehlerwörter und verbessere den Satz.');
+      q=repair(broken,correct,v.answer.length,'Prüfe die Großschreibung der Nomen. Markiere alle Fehlerwörter und verbessere den Satz.');
     }else if(d===2)q=mark('Markiere alle Nomen. Der Satz enthält auch Begleiter und Tätigkeitswörter.',n.l);
-    else if(d===4)q=mark('Markiere alle Nomen, auch die als Nomen gebrauchte Tätigkeit.','Beim {'+nominal[j]+'} erzählt {Hilda}: '+n.s);
+    else if(d===4)q=mark('Markiere alle Nomen, auch Tätigkeiten, die hier als Nomen gebraucht werden.',anspruchsvoll[j]);
     else q=mark('Markiere alle Nomen im Satz.',d===1?n.s:n.l);
+    if(d===3||d===4){q.letterCase='lower';q.context='Hier sind alle Wörter absichtlich kleingeschrieben. Nutze Satzkontext und Artikelprobe.';}
     add('nomen',d,'sicherung',d===5?'A19':'A18',['Q001','Q047'],family,q,
       ['Prüfe die Bezeichnungen für Dinge, Lebewesen oder Vorstellungen.','Setze probeweise einen Artikel davor. Bei „beim“ steckt „bei dem“ darin.','Suche unter anderem die Bezeichnung „'+n.n+'“ und ihre Formen.'],
       '„'+n.n+'“ ist ein Nomen. Auch Nomen mitten im Satz werden großgeschrieben.');
-    if(d===1)q=fields('gap','Ergänze den passenden bestimmten Artikel und die Mehrzahl.',[['Artikel zu '+n.n,n.a,['der','die','das']],['Mehrzahl: die …',n.p]],n.a+' '+n.n+' – die …');
-    else if(d===2)q=fields('form','Vervollständige die kleine Nomentabelle.',[['bestimmter Artikel',n.a],['Singular ohne Artikel',n.n],['Plural ohne Artikel',n.p]],'Nomen: '+n.n);
+    if(d===1)q=fields('gap','Ergänze den passenden bestimmten Artikel und die Mehrzahl.',[['bestimmter Artikel Singular',n.a,['der','die','das']],['Plural mit Artikel','die '+n.p]],'Nomen: '+n.n);
+    else if(d===2)q=fields('form','Vervollständige die kleine Nomentabelle.',[['bestimmter Artikel Singular',n.a],['Plural mit Artikel','die '+n.p]],'Nomen: '+n.n);
     else if(d===3)q=fields('form','Bilde das zusammengesetzte Nomen und ergänze seinen bestimmten Artikel.',[['zusammengesetztes Nomen',n.c],['Artikel zum neuen Nomen',n.ca]],n.parts.join(' + '));
-    else if(d===4)q=fields('form','Ergänze die Formen und prüfe das Grundwort.',[['Nomen aus der Tätigkeit '+nominal[j].toLowerCase(),nominal[j]],['Plural von '+n.n,n.p],['Artikel zu '+n.c,n.ca]]);
-    else q=fields('form','Überprüfe die Wörter für das Inselbuch.',[['Kompositum aus '+n.parts.join(' + '),n.c],['Grundwort des Kompositums',n.parts[1]],['Artikel des Kompositums',n.ca]]);
+    else if(d===4)q=fields('form','Ergänze die Formen und prüfe das Grundwort.',[['Nomen aus der Tätigkeit '+nominal[j].toLowerCase(),nominal[j]],['Plural von '+n.n+' mit Artikel','die '+n.p],['Artikel zu '+n.c,n.ca]]);
+    else q=fields('form','Überprüfe die Wörter für das Inselbuch.',[['Kompositum aus '+n.parts.join(' + '),n.c],['Plural des Kompositums mit Artikel','die '+kompositumPlural[j]],['Artikel des Kompositums',n.ca]]);
     add('nomen',d,'kern',d>=3?'A07':'A02',['Q001','Q050'],family,q,
       d<=2?['Lies, ob der Artikel, die Einzahl oder die Mehrzahl gefragt ist.','Die Mehrzahl hat den bestimmten Artikel „die“. In der Einzahl bleibt das Geschlecht des Nomens erhalten.','Vergleiche die Formen: '+n.a+' '+n.n+' – die '+n.p+'.']:['Achte auf Artikel, Anzahl und Wortbildung.','Bei einem zusammengesetzten Nomen bestimmt das letzte Nomen den Artikel.','Das Grundwort ist „'+n.parts[1]+'“. Vergleiche außerdem '+n.a+' '+n.n+' mit die '+n.p+'.'],
       'Die Mehrzahl lautet „'+n.p+'“. „'+n.c+'“ hat den Artikel „'+n.ca+'“, weil sein Grundwort „'+n.parts[1]+'“ ist.');
-    if(d===1)q=mc('Welches Wort passt NICHT in die Reihe der Nomen?',['segeln','leise','hämmern','sonnig'][j%4],[n.n,n.p,nominal[j]],n.n+' – '+n.p+' – '+nominal[j]+' – '+['segeln','leise','hämmern','sonnig'][j%4]);
+    if(d===1)q=mc('Welches Wort passt NICHT in die Reihe der Nomen?',['segeln','leise','hämmern','sonnig'][j%4],[n.n,nomen[(j+3)%12].n,nomen[(j+5)%12].n].map(w=>w.toLowerCase()),'Alle Wörter sind hier absichtlich kleingeschrieben. Nutze die Artikelprobe.');
     else if(d===2)q=assign('match','Ordne den Nomen ihr grammatisches Geschlecht zu.',[n.n,n.c,'Kind'],[n.a==='der'?'maskulin':n.a==='die'?'feminin':'neutral',n.ca==='der'?'maskulin':n.ca==='die'?'feminin':'neutral','neutral'],['maskulin','feminin','neutral']);
     else if(d===4)q=assign('sort','Ordne die Ausdrücke: Wo steht ein Nomen, wo ein Verb im Infinitiv?',[n.n,n.p,'das '+nominal[j],nominal[j].toLowerCase()],['Nomen','Nomen','Nomen','Verb im Infinitiv'],['Nomen','Verb im Infinitiv']);
     else q=mc(n.frage,n.genau,n.falsch);
     add('nomen',d,'transfer',d===1?'A05':d===2?'A38':d===4?'A18':'A09',d>=3?['Q035','Q001']:['Q001'],family,q,
-      d===2?['Setze vor jedes Nomen seinen bestimmten Artikel in der Einzahl.','„der“ steht für maskulin, „die“ für feminin, „das“ für neutral.','Vergleiche: '+n.a+' '+n.n+', '+n.ca+' '+n.c+' und das Kind.']:d===4?['Prüfe den Begleiter der Tätigkeit.','Mit dem Artikel „das“ wird die Tätigkeit hier als Nomen gebraucht und großgeschrieben.','„das '+nominal[j]+'“ ist ein Nomen; „'+nominal[j].toLowerCase()+'“ ist hier der Infinitiv.']:[d===1?'Achte auf die Wortart, nicht auf die Bedeutung.':'Welche Information gibt der Zusammenhang vor?',d===1?'Nomen können einen Artikel haben. Ein kleingeschriebenes Tätigkeits- oder Eigenschaftswort gehört hier nicht dazu.':'Eine genauere Bezeichnung ergänzt eine Eigenschaft. Sie muss nicht mit dem allgemeinen Nomen gleichbedeutend sein.',d===1?'Die drei Nomen in dieser Reihe sind großgeschrieben.':'Beziehe dich auf die genaue Beschreibung; prüfe auch das letzte Nomen im Kompositum.'],
+      d===2?['Setze vor jedes Nomen seinen bestimmten Artikel in der Einzahl.','„der“ steht für maskulin, „die“ für feminin, „das“ für neutral.','Vergleiche: '+n.a+' '+n.n+', '+n.ca+' '+n.c+' und das Kind.']:d===4?['Prüfe den Begleiter der Tätigkeit.','Mit dem Artikel „das“ wird die Tätigkeit hier als Nomen gebraucht und großgeschrieben.','„das '+nominal[j]+'“ ist ein Nomen; „'+nominal[j].toLowerCase()+'“ ist hier der Infinitiv.']:[d===1?'Achte auf die Wortart, nicht auf die Bedeutung.':'Welche Information gibt der Zusammenhang vor?',d===1?'Nomen können einen Artikel haben. Das Tätigkeits- oder Eigenschaftswort gehört in dieser Verwendung nicht dazu.':'Eine genauere Bezeichnung ergänzt eine Eigenschaft. Sie muss nicht mit dem allgemeinen Nomen gleichbedeutend sein.',d===1?'Die Schreibweise hilft hier nicht: Überlege, welches Wort ein Ding oder Lebewesen bezeichnet.':'Beziehe dich auf die genaue Beschreibung; prüfe auch das letzte Nomen im Kompositum.'],
       d===1?'Das unpassende Wort gehört nicht zu den Nomen.':d===2?'Der Artikel hilft beim grammatischen Geschlecht: der – maskulin, die – feminin, das – neutral.':d===4?'Ein Infinitiv kann mit einem Artikel als Nomen gebraucht werden: das '+nominal[j]+'.':'Hier ist „'+n.genau+'“ die genauere Bezeichnung für den beschriebenen Zusammenhang.');
   });
   G.nomen=nomen;
@@ -101,8 +124,8 @@
       d===1?['Betrachte alle Verbteile im Satz.','Präteritum ist hier eine einzelne Vergangenheitsform. Perfekt enthält haben oder sein mit Partizip II. Futur I enthält werden mit Infinitiv.','Die Zeitform lautet hier '+zeiten[t]+'.']:d===2?['Beziehe die Form auf „du“.','Die finite Form verändert sich mit der Person. Eine trennbare Partikel ist selbst keine Personalendung.','Für „du“ passt „'+sol(v.du).join('“ oder „')+'“.']:d===3?['Suche zuerst den finiten Teil der Verbform.','Prüfe, ob eine Partikel, ein Infinitiv oder ein Partizip zum Satzkern gehört.','Hier gehören diese Teile zusammen: '+G.annotation(satz(v,t,true)).answer.map(i=>G.annotation(satz(v,t,true)).tokens[i]).join(' … ')+'.']:['Untersuche die Verbform und ihren Zusammenhang mit dem Satz.','Im Perfekt gehören eine Form von haben oder sein und das Partizip II zusammen. Das Partizip ist ebenfalls infinit.','Der Infinitiv lautet „'+v.inf+'“. Die passende Perfektform ist „'+v.aux+' … '+v.part+'“.'],
       'Bei „'+v.inf+'“ lautet das Partizip II „'+v.part+'“. '+zeiten[t]+' und andere Zeitformen bleiben Formen desselben Verbs.');
     if(d===1){
-      const rows=t<2?[['passende Verbform',forms,[...forms,v.inf,t===0?sol(v.past)[0]:sol(v.er)[0]]]]:[['finite Verbform',t===2?v.aux:'wird',['hat','ist','wird','haben']],['weiterer Verbteil',t===2?v.part:v.inf,[v.part,v.inf,sol(v.er)[0]]]];
-      q=fields('gap','Ergänze die vorgegebene Zeitform: '+zeiten[t]+'.',rows,v.s+' … '+v.rest+(v.partikel&&t<2?' '+v.partikel:'')+'.');
+      const rows=t<2?[['finite Verbform',forms,[...forms,v.inf,t===0?sol(v.past)[0]:sol(v.er)[0]]],...(v.partikel?[['abgetrennter Verbteil',v.partikel,[v.partikel,...['vor','aus','auf'].filter(p=>p!==v.partikel)]]]:[])]:[['finite Verbform',t===2?v.aux:'wird',['hat','ist','wird','haben']],['weiterer Verbteil',t===2?v.part:v.inf,[v.part,v.inf,sol(v.er)[0]]]];
+      q=G.lueckensatz(fields('gap','Ergänze die vorgegebene Zeitform: '+zeiten[t]+'.',rows),satz(v,t,true));
     }else if(d===2)q=fields('form','Ergänze die Formtabelle. Das Subjekt bleibt gleich.',[['Präsens',sol(v.er)],['Präteritum',sol(v.past)],['Partizip II',v.part]],'Verb: '+v.inf+' · Subjekt: '+v.s+(v.partikel?' · Die Partikel '+v.partikel+' bleibt bei Präsens und Präteritum abgetrennt.':''));
     else if(d===3||d===4){
       const ziel=(t+1)%4,variants=ziel===1?sol(v.past).map((_,i)=>satz(v,ziel,false,i)):ziel===0?sol(v.er).map((_,i)=>satz(v,ziel,false,i)):[satz(v,ziel)];
@@ -112,7 +135,7 @@
       ['Lies zuerst, welche Zeitform gefordert ist.','Die Person bleibt gleich. Für Perfekt und Futur I musst du alle Verbteile berücksichtigen.','Präsens: '+sol(v.er).join(' oder ')+'. Präteritum: '+sol(v.past).join(' oder ')+'. Partizip II: '+v.part+'.'],
       'Der Infinitiv „'+v.inf+'“ gehört zu den '+(v.klasse==='schwach'?'schwachen':v.klasse==='gemischt'?'gemischten':'starken')+' Verben. Passender Beispielsatz: '+satz(v,t));
     if(d<=2)q=assign('match','Verbinde jede Verbform mit der richtigen Zeitform.',zeiten.map((_,t)=>satz(v,t)),zeiten,zeiten);
-    else if(d===3)q=mc('Welche Form kann als Infinitiv in einer Verbklammer stehen?',v.inf,[v.part,sol(v.er)[0]],satz(v,3));
+    else if(d===3)q=mc('Welche Form kann als Infinitiv in einer Verbklammer stehen?',v.inf,[v.part,sol(v.er)[0]],'Gesucht ist eine ungebeugte Grundform.');
     else if(d===4){
       const items=[v.aux,v.part,v.inf,...(v.partikel?[v.partikel]:[])],answer=['finite Form','Partizip II','Infinitiv',...(v.partikel?['abgetrennte Verbpartikel']:[])];
       q=assign('match','Unterscheide finite Form, infinite Formen und gegebenenfalls die Verbpartikel.',items,answer,['finite Form','Partizip II','Infinitiv','abgetrennte Verbpartikel'],satz(v,0)+' '+satz(v,2));
@@ -173,11 +196,12 @@
     add('adjektive',d,'sicherung',d===5?'A19':'A37',['Q001','Q037'],family,q,
       ['Suche die Wörter, die Eigenschaften oder eine Wahrnehmung beschreiben.','Prüfe die Verbindung mit dem Nomen. Nach dem Artikel kann eine Endung nötig sein.','Vergleiche die Grundform „'+pos+'“ mit einer passenden Form wie „'+form+'“.'],
       'Adjektive können vor einem Nomen stehen oder anders verwendet werden. Die Endung richtet sich nach dem Zusammenhang.');
-    if(d===1)q=fields('form','Ergänze die erste Steigerungsform.',[['Grundform',pos],['Komparativ',kom]],pos+' – … – '+sup);
-    else if(d===2)q=fields('form','Vervollständige die Steigerungsreihe.',[['Positiv',pos],['Komparativ',kom],['Superlativ mit am',sup]],'Adjektiv: '+pos);
-    else if(d===3)q=fields('form','Ergänze die Adjektivformen.',[['erste Steigerungsform von '+pos,kom],['Superlativ mit am',sup],['Adjektiv vor dem Nomen',m[2],m[2].concat(m[3])]],'Die erste Textfassung soll freundlich wirken: '+m[1]);
+    if(d===1)q=fields('form','Ergänze die erste Steigerungsform.',[['Komparativ',kom]],'Adjektiv: '+pos);
+    else if(d===2)q=fields('form','Vervollständige die Steigerungsreihe.',[['Komparativ',kom],['Superlativ mit am',sup]],'Adjektiv: '+pos);
+    else if(d===3)q=fields('form','Ergänze die Adjektivformen.',[['Komparativ von '+pos,kom],['Superlativ mit am',sup],['Adjektiv vor dem Nomen',m[2],m[2].concat(m[3])]],'Die erste Textfassung soll freundlich wirken: '+m[1]);
     else if(d===4)q=fields('transfer','Gestalte eine freundlich erwartungsvolle Textfassung. Wähle in beiden Lücken eine passende Form.',[[m[0],m[2],m[2].concat(m[3])],[zweite[0],zweite[2],zweite[2].concat(zweite[3])]],m[1]+' '+zweite[1]+' Die Kinder freuen sich auf den Besuch.');
-    else q=fields('form','Prüfe die Formen für die überarbeitete Beschreibung.',[['Grundform',pos],['Komparativ',kom],['Superlativ mit am',sup]],'Adjektiv: '+pos);
+    else q=fields('form','Prüfe die Formen für die überarbeitete Beschreibung.',[['Komparativ',kom],['Superlativ mit am',sup]],'Adjektiv: '+pos);
+    if(d!==4)q.degreeExample=pos==='schnell'?['hell','heller','am hellsten']:['schnell','schneller','am schnellsten'];
     add('adjektive',d,'kern',d===4?'A10':'A08',['Q001','Q037','Q041'],family,q,
       ['Lies die ganze Beschreibung, bevor du ein Wort auswählst.','Vergleiche Eigenschaften mit dem Komparativ. Bei Textwirkung zählt der gesamte Zusammenhang; es gibt oft mehrere passende Wörter.','Die Steigerung von „'+pos+'“ lautet „'+kom+'“ und „'+sup+'“. Für eine freundliche Fassung passen hier zum Beispiel „'+m[2][0]+'“ oder „'+m[2][1]+'“.'],
       'Die Formenreihe lautet '+pos+' – '+kom+' – '+sup+'. Die Wirkung einzelner Adjektive ist nicht für jeden Text gleich.');
@@ -289,7 +313,7 @@
    ['Frage im vollständigen Satz nach der gesuchten Wortgruppe.','Die Frage „'+fragen[k]+'“ führt hier zur gesuchten Gruppe.','Die Form „'+(d>=3?erweitert[k]:gruppe)+'“ steht hier im '+namen[k]+'.'],
    'Die Frage „'+fragen[k]+'“ bestimmt hier den '+namen[k]+'. Artikel und gegebenenfalls Adjektiv gehören zur Nomengruppe.');
   const ks=d===1?[k,(k+2)%4]:d===2?[0,1,2,3]:[k,(k+1)%4,(k+2)%4];
-  q=fields('form',d>=3?'Setze die ganze Nomengruppe mit Adjektiv in die verlangten Fälle.':'Ergänze die Kasustabelle. Schreibe Artikel und Nomen.',ks.map(i=>[namen[i]+' – '+fragen[i],d>=3?erweitert[i]:formen[i]]),d>=3?'Grundform: '+erweitert[0]:'Grundform: '+formen[0]);
+  q=fields('form',d>=3?'Setze die ganze Nomengruppe mit Adjektiv in die verlangten Fälle.':'Ergänze die Kasustabelle. Schreibe Artikel und Nomen.',ks.map(i=>[namen[i]+' – '+fragen[i],d>=3?erweitert[i]:formen[i]]),'Nomen: '+n+(j>=9?' (Mehrzahl)':' (Einzahl)')+(d>=3?' · Eigenschaft: '+['alt','schwer','gelb','mutig','klein','riesig','magisch','silbern','müde','alt','rot','mutig'][j]:''));
   add('faelle',d,'kern','A02',['Q050','Q042'],family,q,
    ['Lies für jede Tabellenzeile die Kasusfrage.','Artikel und gegebenenfalls Endungen müssen zum gefragten Fall passen.','Vergleiche: '+erweitert.join(' – ')+'.'],
    'Die Formen lauten: '+formen.map(v=>sol(v).join(' / ')).join(' – ')+'. Auch bei gleich aussehenden Formen entscheidet die Frage im Satz.');

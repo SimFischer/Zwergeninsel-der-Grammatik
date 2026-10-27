@@ -71,7 +71,7 @@
   }
   function story() {
     const schritte = [
-      ['Willkommen auf der Insel!', 'Ich bin Meisterin Hammerlind. Schön, dass du da bist!', 'meisterin-erklaert', 'insel-grund'],
+      ['Willkommen auf der Insel!', 'Ich bin Meisterin Hammerlind. Schön, dass du da bist!', 'meisterin-erklaert', 'insel-start'],
       ['Unser Dorf braucht uns.', 'Viele Gebäude sind noch zerstört. Gemeinsam bauen wir sie wieder auf.', 'meisterin-ermutigt', 'werkstatt-ruine'],
       ['Auf in die Stollen!', 'Dort entdecken wir Wörter und Sätze. Für gemeisterte Grundstollen bekommen wir Baumaterial.', 'meisterin-erklaert', 'stollen-tiefer'],
       ['Jeder Fund hilft.', 'Mit unserem Material wachsen neue Häuser. Bald kehren auch die anderen Zwerge zurück!', 'meisterin-jubelt', 'werkstatt'],
@@ -82,7 +82,7 @@
       const dots = h('div', { class: 'fortschritt' }, schritte.map((_, i) => h('span', { class: i < n ? 'voll' : i === n ? 'jetzt' : '' })));
       zeige(h('div', { class: 'screen' }, Z.hintergrund('titel-hintergrund', 'hg-ersatz-titel', 'rgba(20,12,8,.25)'),
         h('div', { class: 'story-mitte' }, h('div', { class: 'pergament auf-pergament story-karte' },
-          h('div', { class: 'story-vorschau' }, bild(asset, '')), h('div', { class: 'begleiter' }, h('div', { class: 'begleiter-bild story-meisterin' }, bild(pose, 'Meisterin Hammerlind')), h('div', { class: 'begleiter-blase pergament auf-pergament' }, text('h2', title), text('p', line))),
+          h('div', { class: 'story-vorschau' }, asset==='insel-start'?Z.inselSzene({vorschau:true}).el:bild(asset, '')), h('div', { class: 'begleiter' }, h('div', { class: 'begleiter-bild story-meisterin' }, bild(pose, 'Meisterin Hammerlind')), h('div', { class: 'begleiter-blase pergament auf-pergament' }, text('h2', title), text('p', line))),
           h('div', { class: 'knopf-reihe' }, dots, btn(n < schritte.length - 1 ? 'Weiter' : 'Los geht’s!', () => { if (++n < schritte.length) zeichne(); else reise('schmiede', halle); }))))));
     }
     zeichne();
@@ -286,7 +286,7 @@
     shell('Buch der Sprachzwerge', h('div', { class: 'halle-inhalt' }, h('section', { class: 'pergament auf-pergament stollen seiten' }, ...Z.STOLLEN.map(s => h('article', { class: 'seite' }, h('div', { class: 'seite-kopf' }, icon.buch(), text('h3', s.name)), text('p', Z.WISSEN[s.id][0]), text('div', Z.WISSEN[s.id][1], { class: 'seite-beispiel' }))))));
   }
   function sammlung() {
-    shell('Dein Abzeichen-Album', h('div', { class: 'halle-inhalt' }, h('section', { class: 'pergament auf-pergament stollen' }, text('h2', 'Deine Schätze'), h('div', { class: 'medaillen' }, ...Z.ABZEICHEN.map(a => h('article', { class: 'medaille ' + (a.test(stand) ? 'gold' : 'gesperrt') }, h('div', { class: 'medaille-rund mit-bild' }, bild('abzeichen-' + a.id, a.name)), text('div', a.name, { class: 'medaille-name' }), text('div', a.text, { class: 'medaille-text' }))))), btn('Zur Zwergen-Sammlung', () => zwergenWahl())));
+    shell('Dein Abzeichen-Album', h('div', { class: 'halle-inhalt' }, h('section', { class: 'pergament auf-pergament stollen' }, text('h2', 'Deine Schätze'), h('div', { class: 'medaillen' }, ...Z.ABZEICHEN.map(a => {const frei=a.test(stand);return h('article', { class: 'medaille ' + (frei ? 'gold schatz-entdeckt' : 'gesperrt'), 'data-award':a.id,'aria-label':frei?a.name:'Unentdeckter Schatz' }, h('div', { class: 'medaille-rund '+(frei?'mit-bild':'medaille-symbol'), 'aria-hidden':!frei?'true':null }, frei?bild('abzeichen-' + a.id, a.name):icon.schloss()), text('div', frei?a.name:'???', { class: 'medaille-name' }), text('div', a.text, { class: 'medaille-text' }));}))), btn('Zur Zwergen-Sammlung', () => zwergenWahl())));
   }
   function botschaft() {
     const field = h('input', { class: 'eingabe runen-eingabe', maxlength: 6, placeholder: 'BOKAMI', 'aria-label': 'Inselbotschaft', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'characters', spellcheck: 'false' });

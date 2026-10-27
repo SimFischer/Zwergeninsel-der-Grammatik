@@ -70,9 +70,9 @@
   Z.demoDarstellung=function(q,phase){
     const el=h('div',{class:'vormach-liste demo-beispiel','aria-label':'Vorgemachtes Beispiel'});
     if(q.context)el.append(h('p',{class:'g-context'},q.context));
-    if(q.fields){q.fields.forEach(f=>el.append(h('div',{class:'vormach-zeile'+(phase>=4?' gut':'')},f.label+': ',phase>=4?f.solutions.join(' / '):'…')));
+    if(q.fields){q.fields.forEach(f=>el.append(h('div',{class:'vormach-zeile'+(phase>=4?' gut':'')},Z.feldLabel(q,f)+': ',phase>=4?f.solutions.join(' / '):'…')));
     }else if(q.tokens){
-      el.append(h('div',{class:'demo-satz'},...q.tokens.map((word,i)=>h('span',{class:phase>=2&&q.answer.includes(i)?(phase>=4?(q.type==='repair'?'demo-fehler':'demo-richtig'):'demo-fokus'):''},word))));
+      el.append(h('div',{class:'demo-satz'},...q.tokens.map((word,i)=>h('span',{class:phase>=2&&q.answer.includes(i)?(phase>=4?(q.type==='repair'?'demo-fehler':'demo-richtig'):'demo-fokus'):''},phase>=4?word:Z.wortAnzeige(q,i)))));
       if(q.type==='repair'&&phase>=4)el.append(h('div',{class:'vormach-zeile gut'},q.solutions[0]));
     }else if(q.type==='choice'){
       const wrong=q.options.find(a=>!(q.acceptedAnswers||[q.answer]).includes(a));

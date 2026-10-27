@@ -1,13 +1,16 @@
 /* Zwergeninsel – Offline-Speicher
-   Beim Start werden Seiten, Code und Schriften gespeichert (gut 600 KB); die Bilder lädt die Seite danach
+   Beim Start werden Seiten, Code, Schriften und die Intro-Bilder gespeichert; weitere Bilder lädt die Seite danach
    gestaffelt nach. Danach läuft die App auch ohne WLAN.
    Nach jeder Änderung an der App die Versionsnummer erhöhen. */
-const VERSION = 'zwergeninsel-grammatik-v3';
+const VERSION = 'zwergeninsel-grammatik-v4';
 const KERN = [
   './', 'index.html', 'insel.html', 'karten.html', 'lehrkraft.html', 'manifest.webmanifest',
   'css/spiel.css', 'css/insel.css', 'css/grammatik.css',
   'schrift/schrift.css', 'schrift/insel-text-400.woff', 'schrift/insel-text-700.woff', 'schrift/insel-titel-400.woff',
   'js/data.js', 'js/data-bau.js', 'js/data-grammatik.js', 'js/grammatik/wortschmiede.js', 'js/grammatik/satzwerkstatt.js', 'js/grammatik/satzbaumeister.js', 'js/pass.js', 'js/gemeinsam.js', 'js/engines.js', 'js/spielwelt.js', 'js/app.js', 'js/insel-szene.js', 'js/insel.js',
+  'bilder/insel-grund.jpg','bilder/titel-hintergrund.jpg',
+  ...['meisterin-erklaert','meisterin-ermutigt','meisterin-jubelt','stollen-tiefer','werkstatt','lagerfeuer'].map(id=>'bilder/'+id+'.png'),
+  ...['lagerfeuer','huette1','huette2','huette3','werkstatt','steg','bibliothek','ratsplatz','brunnen','muehle','leuchtturm','festhalle'].map(id=>'bilder/'+id+'-ruine.png'),
   'bilder/app-icon.png', 'bilder/app-icon-192.png',
 ];
 

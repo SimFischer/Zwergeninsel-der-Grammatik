@@ -33,18 +33,19 @@
     el.append(...kinder.flat(Infinity).filter(k => k !== null && k !== undefined && k !== false));
   };
 
-  /* Bild mit Platzhalter: Fehlt die Datei noch, erscheint ein beschrifteter Rahmen. */
+  /* Fehlende Bilder zeigen ein neutrales Zeichen, niemals interne Assetnamen. */
   ZI.bild = function bild(datei, alt, cls) {
     /* datei darf auch eine Liste sein: dann wird das erste vorhandene Bild genommen */
-    const liste = (Array.isArray(datei) ? datei.slice() : [datei]).filter((n) => !(ZI.BILD_KOMMT || []).includes(n));
-    if (!liste.length) return h('div', { class: 'platzhalter' + (cls ? ' ' + cls : ''), role: 'img', 'aria-label': alt || '' }, alt || '');
+    const liste = (Array.isArray(datei) ? datei.slice() : [datei]).filter(Boolean).filter((n) => !(ZI.BILD_KOMMT || []).includes(n));
+    const ersatz=()=>h('div',{class:'platzhalter bild-ersatz'+(cls?' '+cls:''),role:'img','aria-label':alt||'Bild'},h('span',{'aria-hidden':'true'},'✦'));
+    if (!liste.length) return ersatz();
     const img = h('img', { src: ZI.BILD(liste[0]), alt: alt || '', class: cls || null, draggable: 'false', decoding: 'async' });
     let n = 0;
     img.addEventListener('error', function weiter() {
       n++;
       if (n < liste.length) { img.src = ZI.BILD(liste[n]); return; }
       img.removeEventListener('error', weiter);
-      const ph = h('div', { class: 'platzhalter' + (cls ? ' ' + cls : ''), role: 'img', 'aria-label': alt || liste[0] }, alt || liste[0]);
+      const ph = ersatz();
       img.replaceWith(ph);
     });
     return img;

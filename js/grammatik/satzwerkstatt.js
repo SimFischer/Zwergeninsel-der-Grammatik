@@ -75,7 +75,7 @@
   add('praedikat',d,'kern','A26',['Q022','Q059','Q061'],family,q,
    ['Prüfe, welcher Teil Person und Zahl anzeigt.','Ein Partizip wie „gefunden“ und ein Infinitiv sind beide infinit. Ein abgetrennter Verbteil wie „auf“ ist eine Partikel.','Hier ist „'+verbs[0]+'“ finit. Die übrigen Teile: '+verbs.slice(1).map((v,i)=>v+' – '+roles[i+1]).join('; ')+'.'],
    verbs.map((v,i)=>'„'+v+'“: '+roles[i]).join('; ')+'.');
-  if(d<=2)q=fields('gap','Ergänze den vollständigen Satzkern. Schreibe in jede Lücke einen Prädikatsteil.',verbs.map((v,i)=>['Prädikatsteil '+(i+1),v]),G.annotation(s).tokens.map((w,i)=>G.annotation(s).answer.includes(i)?'___':w).join(' '));
+  if(d<=2)q=G.lueckensatz(fields('gap','Ergänze den vollständigen Satzkern. Schreibe in jede Lücke einen Prädikatsteil.',verbs.map((v,i)=>['Prädikatsteil '+(i+1),v])),s);
   else if(d===3)q=fields('form','Untersuche die Satzklammer.',[['finite Verbform',verbs[0]],['übrige Prädikatsteile in Satzreihenfolge',verbs.slice(1).join(' ')||'keine'],['Infinitiv des Vollverbs',inf]],base+' Wenn es keinen weiteren Prädikatsteil gibt, schreibe „keine“.');
   else {
    // Ganze Satzkerne bleiben beim Umstellen zusammengehörig; alle Teile müssen verwendet werden.

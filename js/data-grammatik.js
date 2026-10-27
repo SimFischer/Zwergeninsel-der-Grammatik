@@ -73,12 +73,21 @@
     }
     return {tokens,answer,targetGroups:groups};
   }
+  Z.fachLabel=s=>String(s).replace(/\bSingular\b(?! \(Einzahl\))/g,'Singular (Einzahl)').replace(/\bPlural\b(?! \(Mehrzahl\))/g,'Plural (Mehrzahl)').replace(/\bInfinitiv\b(?! \(Grundform\))/g,'Infinitiv (Grundform)').replace(/\bbestimmter Artikel\b(?! \(der)/gi,'bestimmter Artikel (der, die, das)').replace(/\bKomparativ\b(?! \(1\.)/g,'Komparativ (1. Steigerungsform)').replace(/\bSuperlativ\b(?! \(höchste)/g,'Superlativ (höchste Steigerungsform)');
+  Z.feldLabel=(q,f)=>{let label=f.label;if(q.degreeExample){const ex=/Komparativ/.test(label)?q.degreeExample[1]:/Superlativ/.test(label)?q.degreeExample[2]:null;if(ex)label+=' · z. B. '+ex;}return (f.slot?'('+f.slot+') ':'')+label;};
+  Z.wortAnzeige=(q,i)=>q.letterCase==='lower'?q.tokens[i].toLowerCase():q.tokens[i];
+  function lueckensatz(q,s,feldIndices=q.fields.map((_,i)=>i)){
+    if(new Set(feldIndices).size!==feldIndices.length||feldIndices.some(i=>!Number.isInteger(i)||i<0||i>=q.fields.length))throw Error('Ungültige Zuordnung zwischen Satzlücken und Feldern');
+    let index=0;q.gapTemplate=s.split(/(\{[^{}]+\})/g).filter(Boolean).map(p=>p.startsWith('{')?{field:feldIndices[index++]}:p);
+    if(index!==feldIndices.length)throw Error('Lücken und Felder passen nicht: '+s);
+    q.context=q.gapTemplate.map(p=>typeof p==='string'?p:'___ ('+(p.field+1)+')').join('');feldIndices.forEach((f,i)=>q.fields[f].slot=i+1);return q;
+  }
   const sol=v=>Array.isArray(v)?v:[v];
   const mc=(prompt,answer,options,context)=>({type:'choice',prompt,context,answer:sol(answer)[0],acceptedAnswers:sol(answer),options:[...new Set([...sol(answer),...options])],multipleSolutions:sol(answer).length>1});
   const mark=(prompt,s,type='mark')=>({type,prompt,...annotation(s)});
-  const fields=(type,prompt,rows,context)=>({type,prompt,context,fields:rows.map(r=>({label:r[0],solutions:sol(r[1]),...(r[2]?{options:r[2]}:{})})),multipleSolutions:rows.some(r=>sol(r[1]).length>1)});
+  const fields=(type,prompt,rows,context)=>({type,prompt,context,fields:rows.map(r=>({label:Z.fachLabel(r[0]),solutions:sol(r[1]),...(r[2]?{options:r[2]}:{})})),multipleSolutions:rows.some(r=>sol(r[1]).length>1)});
   const input=(type,prompt,solutions,context)=>({type,prompt,context,solutions:sol(solutions),multipleSolutions:sol(solutions).length>1});
-  const assign=(type,prompt,items,answer,categories=[...new Set(answer)],context)=>({type,prompt,items,answer,categories,context});
+  const assign=(type,prompt,items,answer,categories=[...new Set(answer)],context)=>({type,prompt,items,answer:answer.map(Z.fachLabel),categories:categories.map(Z.fachLabel),context});
   const order=(prompt,parts,answers,context)=>({type:'order',prompt,parts,answers,context,multipleSolutions:answers.length>1});
   function repair(s,solution,count,prompt='Markiere die fehlerhaften Wörter und schreibe den Satz richtig.'){
     const data=annotation(s);if(data.answer.length!==count)throw Error('Fehlerzahl passt nicht: '+s);
@@ -88,6 +97,9 @@
     return {type:'repair',prompt:'Fehlerjagd: '+count+' Wortfehler. '+prompt,...data,solutions:[solution],errorCount:count,corrections:changed.map(i=>({index:i,from:data.tokens[i],to:correct[i]}))};
   }
   function add(stollen,tiefe,band,muster,quellen,family,q,hints,explanation,art='materialnah entwickelt'){
+    if(q.type==='gap'&&q.fields&&!q.gapTemplate&&q.context?.includes('___')){
+      let n=0;const annotated=q.context.replace(/___/g,()=>'{'+(n++)+'}');lueckensatz(q,annotated,q.fields.slice(0,n).map((_,i)=>i));
+    }
     const pool=Z.POOLS[stollen][tiefe];
     q.id=prefix[stollen]+'_T'+tiefe+'_'+q.type.toUpperCase()+'_'+muster+'_'+String(pool.length+1).padStart(3,'0');
     if(q.type==='order')q.lowercaseParts=q.parts.flatMap((p,i)=>/^(Der|Die|Das|Den|Dem|Ein|Eine|Einen|Einem)( |$)/.test(p)?[i]:[]);
@@ -96,7 +108,7 @@
     if(hints.length!==3||hints.some(h=>!h))throw Error('Drei fachliche Hilfen fehlen: '+q.id);
     pool.push(q);return q;
   }
-  Z.G={tok,annotation,mc,mark,fields,input,assign,order,repair,add,sol,upper:s=>s.charAt(0).toUpperCase()+s.slice(1)};
+  Z.G={tok,annotation,mc,mark,fields,input,assign,order,repair,add,sol,lueckensatz,upper:s=>s.charAt(0).toUpperCase()+s.slice(1)};
   // Innerhalb jeder Tiefe bleibt derselbe Kompetenzkern erhalten.
   for(const s of Z.STOLLEN)Z.LERNZIELE[s.id]=[
     'Mit klaren Beispielen erkennen und anwenden',

@@ -20,7 +20,7 @@
   };
   Z.loesung=q=>{
     if(q.type==='choice')return (q.acceptedAnswers||[q.answer]).join(' / ');
-    if(q.fields)return q.fields.map(f=>f.label+': '+f.solutions.join(' / ')).join('; ');
+    if(q.fields)return q.fields.map(f=>Z.feldLabel(q,f)+': '+f.solutions.join(' / ')).join('; ');
     if(['mark','groups'].includes(q.type))return q.answer.map(i=>q.tokens[i]).join(' · ');
     if(['sort','match'].includes(q.type))return q.items.map((s,i)=>s+' → '+q.answer[i]).join('; ');
     if(q.type==='order')return q.answers.map(a=>{const sentence=a.map((i,pos)=>pos>0&&q.lowercaseParts?.includes(i)?q.parts[i][0].toLowerCase()+q.parts[i].slice(1):q.parts[i]).join(' ');return sentence[0].toUpperCase()+sentence.slice(1);}).join(' / ');
@@ -37,16 +37,17 @@
   Z.aufgabeAnsicht=function(q){
     const box=h('div',{class:'g-engine'});let read;
     if(q.context)box.append(h('p',{class:'g-context'},q.context));
+    if(q.degreeExample)box.append(h('p',{class:'g-small g-example'},'Unabhängiges Beispiel: Grundform (Positiv) '+q.degreeExample[0]+' → '+q.degreeExample[1]+' → '+q.degreeExample[2]));
     if(q.fields){
       const controls=q.fields.map((f,i)=>{
         if(f.options?.some(o=>o.length>55)){
-          const state={value:''},group=h('div',{class:'g-field-options',role:'group','aria-label':f.label});
+          const state={value:''},group=h('div',{class:'g-field-options',role:'group','aria-label':Z.feldLabel(q,f)});
           const buttons=Z.mischen(f.options).map(option=>h('button',{class:'option g-option',type:'button','aria-pressed':'false',onclick:()=>{state.value=option;buttons.forEach(b=>{const active=b.textContent===option;b.classList.toggle('aktiv',active);b.setAttribute('aria-pressed',String(active));});}},option));
-          group.append(...buttons);box.append(h('div',{class:'g-field g-long','data-field-index':i},h('span',null,f.label),group));return state;
+          group.append(...buttons);box.append(h('div',{class:'g-field g-long','data-field-index':i},h('span',null,Z.feldLabel(q,f)),group));return state;
         }
-        const field=f.options?h('select',{'aria-label':f.label},h('option',{value:''},'Bitte auswählen'),...Z.mischen(f.options).map(o=>h('option',{value:o},o)))
-          :h('input',{'aria-label':f.label,type:'text',autocomplete:'off',autocorrect:'off',autocapitalize:'none',spellcheck:'false'});
-        box.append(h('label',{class:'g-field','data-field-index':i},h('span',null,f.label),field));return field;
+        const field=f.options?h('select',{'aria-label':Z.feldLabel(q,f)},h('option',{value:''},'Bitte auswählen'),...Z.mischen(f.options).map(o=>h('option',{value:o},o)))
+          :h('input',{'aria-label':Z.feldLabel(q,f),type:'text',autocomplete:'off',autocorrect:'off',autocapitalize:'none',spellcheck:'false'});
+        box.append(h('label',{class:'g-field','data-field-index':i},h('span',null,Z.feldLabel(q,f)),field));return field;
       });read=()=>controls.map(c=>c.value);
     }else if(q.type==='choice'){
       let val=null;
@@ -57,17 +58,17 @@
       const selected=new Set();const tokens=h('div',{class:'g-tokens','aria-label':'Wörter im Satz'});
       q.tokens.forEach((text,i)=>{
         if(/^[.,!?;:]$/.test(text)){tokens.append(h('span',null,text));return;}
-        const b=h('button',{class:'g-token',type:'button','aria-pressed':'false',onclick:()=>{if(selected.has(i))selected.delete(i);else selected.add(i);b.classList.toggle('aktiv',selected.has(i));b.setAttribute('aria-pressed',String(selected.has(i)));}},text);tokens.append(b);
+        const b=h('button',{class:'g-token',type:'button','aria-pressed':'false',onclick:()=>{if(selected.has(i))selected.delete(i);else selected.add(i);b.classList.toggle('aktiv',selected.has(i));b.setAttribute('aria-pressed',String(selected.has(i)));}},Z.wortAnzeige(q,i));tokens.append(b);
       });box.append(tokens);read=()=>[...selected].sort((a,b)=>a-b);
       if(q.type==='repair'){
         const field=h('textarea',{rows:2,'aria-label':'Verbesserter Satz',autocapitalize:'sentences',spellcheck:'false',autocomplete:'off'});
         box.append(h('label',null,'Schreibe den verbesserten Satz:',field));read=()=>({mark:[...selected].sort((a,b)=>a-b),text:field.value});
       }
     }else if(['sort','match'].includes(q.type)){
-      const choices=q.items.map((item,i)=>{
-        const select=h('select',{'aria-label':item},h('option',{value:''},'Bitte zuordnen'),...Z.mischen(q.categories).map(c=>h('option',{value:c},c)));
-        box.append(h('label',{class:'g-match'},h('span',null,item),select));return select;
-      });read=()=>choices.map(s=>s.value);
+      const rows=[];const choices=q.items.map((item,i)=>{
+        const select=h('select',{'aria-label':item,'data-item-index':i},h('option',{value:''},'Bitte zuordnen'),...Z.mischen(q.categories).map(c=>h('option',{value:c},c)));
+        rows.push(h('label',{class:'g-match'},h('span',null,item),select));return select;
+      });box.append(...Z.mischen(rows));read=()=>choices.map(s=>s.value);
     }else if(q.type==='order'){
       let used=[];const tray=h('div',{class:'g-tray','aria-label':'Dein Satz'}),bank=h('div',{class:'g-tokens','aria-label':'Satzbausteine'});
       function draw(){

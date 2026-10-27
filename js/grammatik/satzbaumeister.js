@@ -26,7 +26,7 @@
   add('satzbau',d,'sicherung',d===1?'A20':d===5?'A19':'A22',['Q005','Q056'],family,q,
    ['Prüfe die Satzglieder und die finite Verbform.','Eine Wortgruppe kann mehrere Wörter lang sein. Im Aussagesatz steht die finite Verbform an zweiter Satzgliedposition.','Finite Verbform: „'+v+'“. Zeitangabe: „'+zeit+'“. Fragezeichen stehen bei direkten Fragen.'],
    'Der Satz hat die finite Verbform „'+v+'“. Die vollständige Zeitangabe „'+zeit+'“ kann gemeinsam verschoben werden.');
-  if(d===1)q=fields('gap','Vervollständige das Satzfragment mit einem passenden Baustein.',[['fehlendes Satzglied',obj,[obj,zeit]],['Satzschlusszeichen','.' ,['.','?','!']]],sub+' '+v+' '+zeit+' ___'+(end?' '+end:'')+' (sachliche Aussage)');
+  if(d===1)q=G.lueckensatz(fields('gap','Vervollständige die sachliche Aussage mit Satzglied und Schlusszeichen.',[['fehlendes Satzglied',obj,[obj,zeit]],['Satzschlusszeichen','.' ,['.','?','!']]]),sub+' '+v+' '+zeit+' {'+obj+'}'+(end?' '+end:'')+'{.}');
   else if(d===2)q=fields('form','Nutze das Feldermodell. Trage die Bausteine der Vorlage ein.',[['Vorfeld',sub],['linke Satzklammer (finite Form)',v],['Mittelfeld',zeit+' '+obj],['rechte Satzklammer',right]],s+' Wenn die rechte Klammer leer ist, schreibe „leer“.');
   else if(d===3)q=fields('form','Stelle die Zeit ins Vorfeld. Welche Bausteine stehen dann in den Feldern?', [['Vorfeld',zeit],['linke Satzklammer',v],['Mittelfeld',sub.charAt(0).toLowerCase()+sub.slice(1)+' '+obj],['rechte Satzklammer',right]],s+' Behalte Namen groß. Eine leere rechte Klammer heißt „leer“.');
   else if(d===4)q=fields('transfer','Baue aus der Aussage eine Entscheidungsfrage. Wähle den Satz und das Schlusszeichen.',[['Fragesatz',v.charAt(0).toUpperCase()+v.slice(1)+' '+sub.charAt(0).toLowerCase()+sub.slice(1)+' '+zeit+' '+obj+(end?' '+end:'')+'?', [s,v.charAt(0).toUpperCase()+v.slice(1)+' '+sub.charAt(0).toLowerCase()+sub.slice(1)+' '+zeit+' '+obj+(end?' '+end:'')+'?']],['Satzschlusszeichen','?',['.','?','!']]],s);
@@ -69,7 +69,7 @@
   const hs=sub+' '+v+' '+rest,neb=[kon,ns,nrest,nv].filter(Boolean).join(' '),s=hs+', '+neb+'.',front=G.upper(neb)+', '+v+' '+lower+' '+rest+'.';let q;
   if(d===1||d===2)q=mark('Markiere den vollständigen Nebensatz, ohne Komma und Punkt.',hs+', {'+neb+'}.','groups');
   else if(d===3||d===4)q=mark('Markiere den vollständigen Hauptsatz, ohne Komma und Punkt. Der Nebensatz steht vorn.',G.upper(neb)+', {'+v+' '+lower+' '+rest+'}.','groups');
-  else q=fields('gap','Im Satz fehlen genau ein Komma und die passende Verbindung. Ergänze die beiden Lücken.',[['Verbindung',kon,[kon,'und','aber']],['Trennzeichen',',',[',',';',':']]],hs+' ___ ___ '+[ns,nrest,nv].filter(Boolean).join(' ')+'. Beziehung: '+relation+'.');
+  else q=fields('gap','Im Satz fehlen genau ein Komma und die passende Verbindung. Ergänze die beiden Lücken.',[['Trennzeichen',',',[',',';',':']],['Verbindung',kon,[kon,'und','aber']]],hs+' ___ ___ '+[ns,nrest,nv].filter(Boolean).join(' ')+'. Beziehung: '+relation+'.');
   add('verbinden',d,'sicherung',d===5?'A19':'A33','Q003',family,q,
    ['Suche die Verbindung und die zugehörige finite Verbform.','Im Nebensatz steht die finite Verbform am Ende. Vor dem vorangestellten Hauptsatzteil steht ein Komma.','Der Nebensatz lautet „'+neb+'“; seine finite Form ist „'+nv+'“.'],
    '„'+neb+'“ ist der Nebensatz. Sein finites Verb „'+nv+'“ steht am Ende. Haupt- und Nebensatz werden durch ein Komma getrennt.');

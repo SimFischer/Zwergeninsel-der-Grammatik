@@ -104,3 +104,11 @@ button:disabled{cursor:default;opacity:.5}
 .g-engine .g-field.g-long{display:flex;flex-direction:column;align-items:stretch;gap:8px}
 .g-field-options{display:flex;flex-direction:column;gap:10px}
 .g-field-options .g-option{white-space:normal;text-align:left;line-height:1.35}
+/* Die Intro-Insel verwendet dieselben Gebäude und Ruinen wie das Board. */
+.story-vorschau .insel-buehne{position:relative;left:auto;top:auto;transform:none;width:auto;height:100%;max-width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:12px}
+.insel-start .bau .ruine{position:relative;min-height:16px}
+.insel-start .ruinen-ersatz{display:block;width:90%;height:24px;margin:auto;background:linear-gradient(135deg,transparent 15%,#7e7564 16% 42%,transparent 43% 48%,#968877 49%);clip-path:polygon(0 55%,15% 20%,30% 45%,45% 0,60% 50%,80% 25%,100% 60%,100% 100%,0 100%)}
+.insel-start .ruine.geladen .ruinen-ersatz{display:none}
+.insel-start .ruine:not(.geladen) img{position:absolute;inset:0}
+.schatz-entdeckt .medaille-rund{animation:aufploppen .5s ease-out}
+.medaille.gesperrt .medaille-symbol{color:#72634f}

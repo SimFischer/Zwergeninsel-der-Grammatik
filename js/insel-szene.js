@@ -1,6 +1,6 @@
 /* Bestehende Inselbühne, Gebäude, Tiere und Wolken. */
 (function(){ const ZI=window.ZI; const {h,bild}=ZI;
-ZI.inselSzene=function(){
+ZI.inselSzene=function({vorschau=false}={}){
   const buehne = h('div', { class: 'insel-buehne' });
   const grund = h('div', { class: 'insel-grund' }, h('div', { class: 'insel-ersatz' }), h('div', { class: 'wellen' }));
   const grundBild = h('img', { src: ZI.BILD('insel-grund'), alt: '' });
@@ -11,14 +11,17 @@ ZI.inselSzene=function(){
   const bauEls = {};
   /* Wo Rauch aufsteigt (Position im Gebäudebild in Prozent) */
   const RAUCH = { lagerfeuer: [50, 30], huette1: [74, 8], huette2: [62, 10], huette3: [55, 12], werkstatt: [70, 6], festhalle: [50, 6] };
+  const startGebaut=vorschau?ZI.gebaute(0):[];
   ZI.GEBAEUDE.slice().sort((a, b) => a.y - b.y).forEach((g) => {
-    const el = h('div', { class: 'bau', style: { left: g.x + '%', top: g.y + '%', width: g.w + '%' } },
-      h('div', { class: 'ruine' }, g.id === 'schiff' ? null : ZI.bildOder(g.id + '-ruine', g.name + ' (Ruine)', null)),
-      h('div', { class: 'fertig', style: { display: 'none' } }, bild(g.id, g.name)),
+    const amStartFertig=startGebaut.includes(g.id);
+    const el = h('div', { class: 'bau'+(amStartFertig?' gebaut':''), style: { left: g.x + '%', top: g.y + '%', width: g.w + '%' } },
+      h('div', { class: 'ruine' }, vorschau?h('span',{class:'ruinen-ersatz','aria-hidden':'true'}):null, g.id === 'schiff' ? null : ZI.bildOder(g.id + '-ruine', g.name + ' (Ruine)', null)),
+      vorschau&&!amStartFertig?null:h('div', { class: 'fertig', style: { display: amStartFertig?'block':'none' } }, bild(g.id, g.name)),
       RAUCH[g.id] ? h('div', { class: 'rauch', style: { left: RAUCH[g.id][0] + '%', top: RAUCH[g.id][1] + '%' }, 'aria-hidden': 'true' }, h('span'), h('span'), h('span')) : null);
     bauEls[g.id] = el;
     buehne.appendChild(el);
   });
+  if(vorschau){buehne.classList.add('insel-start');buehne.setAttribute('role','img');buehne.setAttribute('aria-label','Unsere Insel zu Beginn des Wiederaufbaus, mit zerstörten Gebäuden');buehne.querySelectorAll('.ruine img').forEach(img=>{const fertig=()=>img.parentElement.classList.add('geladen');img.addEventListener('load',fertig,{once:true});if(img.complete&&img.naturalWidth)fertig();});return {el:buehne,bauEls};}
   const zwergSchicht = h('div');
   const schmuckSchicht = h('div');
   const sonderSchicht = h('div');
