@@ -140,16 +140,35 @@
       return card;
     });
     Z.anhaengen(inhalt, h('div', { class: 'begleiter' }, h('div', { class: 'begleiter-bild' }, bild(z.datei, z.name)), h('div', { class: 'begleiter-blase pergament auf-pergament' }, stand.coreTotal() ? 'Unser Dorf wächst! Du kannst einen neuen Stollen entdecken oder freiwillig tiefer graben.' : 'Unser Dorf braucht Baumaterial. Welchen Stollen möchtest du entdecken?')),
-      h('div', { class: 'welt-wege' }, btn('Meine Insel', () => location.href = 'insel.html?eigen=1', { class: 'knopf holz mit-bild' }), btn('Inselbotschaft', botschaft, { class: 'knopf holz' }), Z.hatGebaeude(stand, 'ratsplatz') ? btn('Zum Dorfplatz', dorfplatz, { class: 'knopf holz' }) : null),
+      h('div', { class: 'welt-wege' }, btn('Mein Fortschritt', fortschritt, { class: 'knopf holz mit-bild' }), btn('Inselbotschaft', botschaft, { class: 'knopf holz' }), Z.hatGebaeude(stand, 'ratsplatz') ? btn('Zum Dorfplatz', dorfplatz, { class: 'knopf holz' }) : null),
       test ? text('p', 'Testmodus · Alle Stollen offen. Testleistungen bleiben außerhalb deines Passes.', { class: 'g-test' }) : null, reiter,
       h('section', { class: 'pergament stollen auf-pergament' }, text('h2', Z.KAPITEL[K]), text('p', 'Entdecke einen Stollen. Nach der Grundstufe darfst du hier freiwillig weitergraben.', { class: 'erklaer' }), h('div', { class: 'stationen stollen-wahl' }, stations)));
     const counts = Z.ROHSTOFF.map((r, i) => zaehler(r.datei, r.name, stand.t.filter((t, index) => t && index % 3 === i).length));
     zeige(h('div', { class: 'screen' }, Z.hintergrund('stollen-hintergrund', 'hg-ersatz-stollen', 'rgba(20,12,8,.35)'),
       h('div', { class: 'leiste halle-leiste' }, btn(avatar(stand.zwerg, true), () => zwergenWahl(), { class: 'rund avatar-knopf', 'aria-label': 'Zwergen-Sammlung öffnen' }),
-        h('div', { class: 'rang-box' }, text('div', z.name, { class: 'titel' }), text('div', rang.name, { class: 'untertitel' }), h('div', { class: 'rang-balken', 'aria-label': 'Rangfortschritt' }, h('div', { style: { width: (rang.next ? (rang.punkte - rang.ab) / (rang.next.ab - rang.ab) * 100 : 100) + '%' } }))),
+        h('button', { class: 'rang-box rang-knopf', type:'button', onclick:ranguebersicht, 'aria-label':'Dein Rang: '+rang.name+' · Details öffnen' }, text('div', z.name, { class: 'titel' }), text('div', rang.name, { class: 'untertitel' }), h('div', { class: 'rang-balken', 'aria-label': 'Rangfortschritt' }, h('div', { style: { width: (rang.next ? (rang.punkte - rang.ab) / (rang.next.ab - rang.ab) * 100 : 100) + '%' } }))),
         h('div', { class: 'spacer' }), h('div', { class: 'rohstoff-reihe' }, counts, zaehler('edelstein', 'Edelsteine', stand.gems())),
         btn(icon.buch(), buch, { class: 'rund', disabled: !Z.hatGebaeude(stand, 'bibliothek'), 'aria-label': 'Buch der Sprachzwerge öffnen' }), btn(icon.album(), sammlung, { class: 'rund', 'aria-label': 'Abzeichen-Album öffnen' }), Z.vollbildKnopf(), btn('Lieferung', pass)),
       h('div', { class: 'screen-scroll', style: { position: 'relative', zIndex: 2 } }, inhalt)));
+  }
+  // Rangkopf und Leiter aus dem ursprünglichen Album, jetzt direkt antippbar.
+  function ranguebersicht(){
+    const r=Z.rang(stand),fortschritt=r.next?Math.max(0,r.punkte-r.ab):1,max=r.next?r.next.ab-r.ab:1;
+    const f=Z.fenster([h('div',{class:'rang-kopf'},bild('rang-'+(r.index+1),r.name,'rang-emblem'),text('h2','Dein Rang: '+r.name)),
+      text('p',r.next?'Noch '+Z.menge(r.next.ab-r.punkte,'Rangpunkt','Rangpunkte')+' bis „'+r.next.name+'“.':'Du hast den höchsten Rang erreicht!'),
+      h('progress',{class:'rang-fortschritt',value:fortschritt,max,'aria-label':'Fortschritt im Rang '+r.name}),
+      text('p',Z.menge(r.punkte,'Rangpunkt','Rangpunkte')+' gesammelt. Jede erstmals geschaffte Tiefe zählt 1 Punkt, jede Stollenkrone einen zusätzlichen Punkt. Wiederholungen zählen nicht erneut.',{class:'g-small'}),
+      h('div',{class:'rang-leiter'},...Z.RAENGE.map(stufe=>h('div',{class:'stufe'+(stufe.index<=r.index?' erreicht':'')+(stufe.index===r.index?' jetzt':''),'aria-current':stufe.index===r.index?'step':null},h('span',{class:'stufe-punkte'},stufe.ab),h('span',null,stufe.name)))),
+      btn('Schließen',()=>f.schliessen())]);
+  }
+  function fortschritt(){
+    const freiwillig=stand.t.reduce((n,t)=>n+Math.max(0,t-1),0);
+    shell('Mein Fortschritt',h('div',{class:'halle-inhalt'},
+      h('section',{class:'pergament auf-pergament stollen'},text('h2','Dein Zwerg lernt dazu!'),text('p','Hier siehst du deinen Lernstand. Unser Dorf bauen wir gemeinsam auf der Klasseninsel.'),
+        text('p',stand.coreTotal()+' von '+Z.STOLLEN.length+' Grundstollen · '+Z.menge(freiwillig,'freiwillige Tiefe','freiwillige Tiefen')),
+        text('p',Z.materialMenge(stand.coreTotal())+' gefunden · '+Z.menge(stand.gems(),'Edelstein','Edelsteine')+' · '+Z.menge(stand.kronenTotal(),'Krone','Kronen')),
+        h('div',{class:'knopf-reihe'},btn('Dein Rang: '+Z.rang(stand).name,ranguebersicht,{class:'knopf holz'}),btn('Persönlichen Zwergenpass ansehen',langpass,{class:'knopf holz'}),btn('Deine Schätze',sammlung,{class:'knopf holz'}))),
+      h('section',{class:'pergament auf-pergament stollen'},text('h2','Deine Stollen'),...Z.STOLLEN.map(st=>h('div',{class:'g-fortschritt-stollen','data-progress-stollen':st.id},h('b',null,st.name),Z.tiefenLeiste(stand.t[st.index],true),text('small',stand.t[st.index]?'Tiefste erreichte Tiefe: '+stand.t[st.index]:Z.stollenFrei(stand,st.index)?'Bereit zum Entdecken':'Noch gesperrt'))))));
   }
   function eingang(i) {
     const s = Z.STOLLEN[i], n = stand.t[i], next = Math.min(5, n + 1);
@@ -233,7 +252,7 @@
     const z = zwerg(), s = Z.STOLLEN[r.i];
     let titel = bestanden ? 'Gut geübt!' : 'Du bist auf dem richtigen Weg!', message = bestanden ? 'Jeder Versuch macht dich sicherer.' : 'Du hast die Aufgaben mit Hilfe gelöst. Beim nächsten Mal gelingt dir noch mehr allein.';
     let asset = bestanden ? 'meisterin-jubelt' : 'meisterin-ermutigt';
-    if (neu) { titel = r.tiefe === 1 ? 'Stollen gemeistert!' : r.tiefe === 5 ? 'Die Stollenkrone gehört dir!' : 'Du hast Tiefe ' + r.tiefe + ' erreicht!'; asset = r.tiefe === 1 ? s.rohstoff.datei : r.tiefe === 5 ? 'tiefe-krone' : 'edelstein'; message = r.tiefe === 1 ? '+1 ' + s.rohstoff.name + ' für den Wiederaufbau!' : r.tiefe === 5 ? 'Ganz unten angekommen. Stark!' : '+' + Z.REGELN.edelsteine + ' Edelsteine für deine Sammlung!'; }
+    if (neu) { titel = r.tiefe === 1 ? 'Stollen gemeistert!' : r.tiefe === 5 ? 'Die Stollenkrone gehört dir!' : 'Du hast Tiefe ' + r.tiefe + ' erreicht!'; asset = r.tiefe === 1 ? s.rohstoff.datei : r.tiefe === 5 ? 'tiefe-krone' : 'edelstein'; message = r.tiefe === 1 ? '+' + Z.materialMenge(1) + ' (' + s.rohstoff.name + ') für den Wiederaufbau!' : r.tiefe === 5 ? 'Ganz unten angekommen. Stark!' : '+' + Z.menge(Z.REGELN.edelsteine,'Edelstein','Edelsteine') + ' für deine Sammlung!'; }
     if (test) message = 'Proberunde im Testmodus. Dein Pass bleibt unverändert.';
     if (bestanden) Z.konfetti();
     const queue = neu ? belohnungen(vorher, stand) : [];
@@ -266,7 +285,7 @@
       const z = e.item; parts.push(bild('truhe-offen', '', 'truhe-klein'), text('h2', 'Ein neuer Zwerg ist zurück!'), h('div', { class: 'gross-bild strahlen mit-glanz' }, h('div', { class: 'glanz', 'aria-hidden': 'true' }, bild('zwerg-freigeschaltet-glanz', '')), bild([z.datei + '-jubel', z.datei], z.name)), text('h3', z.name), text('p', '„Danke! Auf unserer Insel fühle ich mich wieder zu Hause.“', { class: 'begleiter-blase pergament auf-pergament' }));
       mitnehmen = btn(z.name + ' kommt mit', () => { stand.zwerg = z.nr; save(); next(); }, { class: 'knopf holz' });
     } else if (e.type === 'bau') {
-      parts.push(text('h2', e.items.length === 1 ? 'Ein neues Gebäude ist bereit!' : 'Unser Dorf wächst!'), h('div', { class: 'neue-gebaeude' }, ...e.items.map(b => h('div', null, h('div', { class: 'bau-verwandlung' }, bild(b.id + '-ruine', '', 'vorher'), bild(b.id, '', 'nachher')), text('h3', Z.GEBAEUDE.find(g => g.id === b.id).name), text('p', b.funktion)))));
+      parts.push(text('h2', e.items.length === 1 ? 'Ein neues Gebäude ist bereit!' : 'Unser Dorf wächst!'), h('div', { class: 'neue-gebaeude' }, ...e.items.map(b => h('div', null, h('div', { class: 'bau-verwandlung' }, bild(b.ruinenAsset, '', 'vorher'), bild(b.fertigAsset, '', 'nachher')), text('h3', Z.GEBAEUDE.find(g => g.id === b.id).name), text('p', b.funktion)))));
     } else if (e.type === 'stollen') {
       parts.push(text('h2', 'Neue Stollen wurden entdeckt!'), ...e.items.map(s => h('div', { class: 'fund-zeile' }, bild(s.icon, '', 'fund-asset'), text('h3', s.name))));
     } else if (e.type === 'abzeichen') {
@@ -305,12 +324,12 @@
   }
   function lehrer() {
     shell('Lehrkraftbereich', h('div', { class: 'lk-raster' },
-      h('a', { class: 'lk-kachel pergament auf-pergament', href: 'insel.html' }, text('b', 'Zur gemeinsamen Insel'), text('span', 'Lieferungen und Wiederaufbau')),
+      h('a', { class: 'lk-kachel pergament auf-pergament', href: 'insel.html' }, text('b', 'Zur Klasseninsel'), text('span', 'Lieferungen und Wiederaufbau')),
       h('a', { class: 'lk-kachel pergament auf-pergament', href: 'karten.html' }, text('b', 'Passkarten drucken'), text('span', 'Eine feste Karte pro Kind')),
-      h('a', { class: 'lk-kachel pergament auf-pergament', href: 'lehrkraft.html' }, text('b', 'Hinweise zur Grammatikinsel')),
+      h('a', { class: 'lk-kachel pergament auf-pergament', href: 'lehrkraft.html' }, text('b', 'Lehrer-Spickzettel')),
       h('div', { class: 'lk-kachel pergament auf-pergament' }, btn(test ? 'Testmodus ausschalten' : 'Testmodus einschalten', () => { test = !test; Z.sitzung.schreiben('zi-test', test); lehrer(); }), text('p', 'Im Testmodus sind alle Tiefen offen. Testleistungen werden nicht gespeichert.'))), start, 'titel-hintergrund');
   }
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) { navigator.serviceWorker.register('sw.js').catch(() => {}); Z.vorladen(false); }
   const route = new URLSearchParams(location.search).get('ort'), saved = Z.Stand.ausCode(Z.sitzung.lesen(KEY, ''));
-  if (route && saved) { stand = saved; ({ buch, dorfplatz, sammlung, halle }[route] || halle)(); } else start();
+  if (route && saved) { stand = saved; ({ buch, dorfplatz, sammlung, halle, fortschritt }[route] || halle)(); } else start();
 })();

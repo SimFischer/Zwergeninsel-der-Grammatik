@@ -14,9 +14,9 @@ ZI.inselSzene=function({vorschau=false}={}){
   const startGebaut=vorschau?ZI.gebaute(0):[];
   ZI.GEBAEUDE.slice().sort((a, b) => a.y - b.y).forEach((g) => {
     const amStartFertig=startGebaut.includes(g.id);
-    const el = h('div', { class: 'bau'+(amStartFertig?' gebaut':''), style: { left: g.x + '%', top: g.y + '%', width: g.w + '%' } },
-      h('div', { class: 'ruine' }, vorschau?h('span',{class:'ruinen-ersatz','aria-hidden':'true'}):null, g.id === 'schiff' ? null : ZI.bildOder(g.id + '-ruine', g.name + ' (Ruine)', null)),
-      vorschau&&!amStartFertig?null:h('div', { class: 'fertig', style: { display: amStartFertig?'block':'none' } }, bild(g.id, g.name)),
+    const el = h('div', { class: 'bau'+(amStartFertig?' gebaut':''), 'data-building':g.id, style: { left: g.x + '%', top: g.y + '%', width: g.w + '%' } },
+      h('div', { class: 'ruine' }, vorschau?h('span',{class:'ruinen-ersatz','aria-hidden':'true'}):null, g.id === 'schiff' ? null : ZI.bildOder(g.ruinenAsset, g.name + ' (Ruine)', null)),
+      vorschau&&!amStartFertig?null:h('div', { class: 'fertig', style: { display: amStartFertig?'block':'none' } }, bild(g.fertigAsset, g.name)),
       RAUCH[g.id] ? h('div', { class: 'rauch', style: { left: RAUCH[g.id][0] + '%', top: RAUCH[g.id][1] + '%' }, 'aria-hidden': 'true' }, h('span'), h('span'), h('span')) : null);
     bauEls[g.id] = el;
     buehne.appendChild(el);

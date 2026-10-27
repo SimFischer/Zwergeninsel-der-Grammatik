@@ -3,9 +3,9 @@
 Grammatik-Lernspiel für Deutsch, Klasse 5. Die bestehende Inselwelt, zwölf Figuren, Gebäude, Bilder, lokale Schriften und Animationen werden weiterverwendet. Reines HTML/CSS/JavaScript, ohne Server oder externe Bibliotheken.
 
 - `index.html`: Schmiede, elf Stollen in drei Kapiteln, jeweils fünf unabhängige Tiefen.
-- `insel.html`: gemeinsames Insel-Board; `insel.html?eigen=1`: persönliche Insel aus dem aktiven Tab.
+- `insel.html`: gemeinsames Klassen-Board. „Mein Fortschritt“ in der Schmiede zeigt den persönlichen Lernstand; frühere persönliche Insellinks führen dorthin.
 - `karten.html`: vorhandene druckbare Passkarten mit festen Kartennummern.
-- `lehrkraft.html`: Unterrichtsablauf und Bedienhinweise.
+- `lehrkraft.html`: kompakter, druckbarer Lehrer-Spickzettel im ursprünglichen Zweispalten-Layout.
 
 ## Lernen und Fortschritt
 
@@ -44,6 +44,7 @@ Mit einem lokalen statischen HTTP-Server öffnen oder auf GitHub Pages hosten. D
 ```sh
 node --test tests/*.test.cjs
 node tests/browser.cjs
+node tests/unterricht-browser.cjs
 ```
 
 Die Browserprüfung benötigt Playwright mit Chromium. Sie startet ihren eigenen lokalen HTTP-Server und prüft Bedienung und Speicherung im iPad-Landscape-Format. Die Logiktests benötigen nur Node.js.

@@ -2,7 +2,7 @@
    Beim Start werden Seiten, Code, Schriften und die Intro-Bilder gespeichert; weitere Bilder lädt die Seite danach
    gestaffelt nach. Danach läuft die App auch ohne WLAN.
    Nach jeder Änderung an der App die Versionsnummer erhöhen. */
-const VERSION = 'zwergeninsel-grammatik-v4';
+const VERSION = 'zwergeninsel-grammatik-v5';
 const KERN = [
   './', 'index.html', 'insel.html', 'karten.html', 'lehrkraft.html', 'manifest.webmanifest',
   'css/spiel.css', 'css/insel.css', 'css/grammatik.css',

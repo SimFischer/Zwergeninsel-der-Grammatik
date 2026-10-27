@@ -1,19 +1,69 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Grammatikinsel · Lehrkraft</title><link href="schrift/schrift.css" rel="stylesheet"><link href="css/spiel.css" rel="stylesheet"><link href="css/grammatik.css" rel="stylesheet"><style>body{overflow:auto;color:#3a2617;background:#f4e6c8;padding:24px;max-width:980px;margin:auto}section{margin:28px 0}li{margin:10px 0}a{color:#4f6a26}h1{font-size:38px}h2{font-size:28px}</style></head>
-<body><a href="index.html">← Zur Schmiede</a><h1>Die Grammatik-Zwergeninsel</h1>
-<p>Deutsch, Klasse 5 · Aufgaben aus der Unterrichtseinheit und materialnahe Weiterentwicklungen.</p>
-<section><h2>So spielt ihr</h2><ol>
-<li>Jedes Kind nutzt eine feste Karte mit Nummer 1–32, wählt einen Zwerg und beginnt in der Wortschmiede.</li>
-<li>Eine Runde hat neun Aufgaben. Für Tiefe 1–4 sind sieben richtige erste Antworten nötig; für Tiefe 5 acht. Hilfe und Korrektur bleiben nach Fehlern möglich. Auch nach angezeigter Lösung muss das Kind die Aufgabe selbst korrekt lösen; Überspringen ist ausgeschlossen.</li>
-<li>Jeder erstmalig abgeschlossene Grundstollen liefert ein Baumaterial. Tiefe 2–4 ist freiwillig und liefert je fünf Edelsteine. Tiefe 5 bringt die Stollenkrone. Wiederholungen geben keine weitere Belohnung.</li>
-<li>Ein einziger vierstelliger Lieferschein enthält alle neuen Funde eines Kindes. Auf dem gemeinsamen <a href="insel.html">Insel-Board</a> unter „Lieferung eintragen“ tippen. Nach vier Zeichen wird automatisch angenommen. Erneute Scheine zählen nichts doppelt. Mehrere neue Stollen passen ebenfalls in diesen einen Code.</li>
-<li>Die sechs Buchstaben der Inselbotschaft vom Board können in der Schmiede Gebäude gemeinsam freischalten. Persönliche Grundstollen ermöglichen auch selbstständiges Weiterspielen.</li>
-<li>Nach der Board-Bestätigung „Auf der Insel angekommen“ antippen. Den persönlichen G2-Pass aufschreiben und „Pass notiert – fertig für heute“ wählen. Bestehende G1-Pässe bleiben gültig. Danach den Tab schließen.</li>
-</ol></section>
-<section><h2>Inselbau</h2><p>Die gemeinsame Insel zählt Grundstollen aller gelieferten Karten. Eine Baustufe entspricht einem Baumaterial pro Kind der eingestellten Klasse. Freiwillige Tiefen verzieren die Insel, beschleunigen den Bau aber nicht.</p>
-<p>Werkstatt: Baustufe 1. Bibliothek und Pronomen: 2. Brunnen und Fälle: 3. Steg und Satzwerkstatt: 5. Mühle und weitere Satzglieder: 6. Leuchtturm und Satzbaumeister: 9. Festhalle: 11. „Sätze verbinden“ verlangt außerdem die Grundstufe „Satzbau und Satzarten“.</p>
-<p>Die Hütten begleiten die Rückkehr neuer Zwerge. Am Dorfplatz stehen Mischrunden nach Kapitelabschluss bereit. Die Festhalle öffnet eine große Mischrunde.</p></section>
-<section><h2>Versteckter Zugang und Sicherung</h2><p>Auf dem Startbildschirm den Titel „Zwergeninsel“ fünf Sekunden gedrückt halten. Dort sind Passkarten, Insel, Hinweise und Testmodus erreichbar. Der Testmodus öffnet alle Tiefen und speichert keine Testleistungen.</p>
-<p>Auf dem gemeinsamen Insel-Board eine freie Stelle der Inselgrafik, etwa das Wasser, fünf Sekunden halten. Dort Klassengröße (1–32) einstellen sowie Inselstände als Datei sichern und laden. Der gemeinsame Stand bleibt lokal auf diesem Gerät gespeichert. Alte Argumentationsstände werden nicht verändert und nicht als Grammatikleistung übernommen.</p></section>
-<section><h2>Unterrichtsinhalte</h2><p>Alle elf Stollen enthalten fünf Tiefen mit jeweils 36 Aufgaben und Varianten. Jede Runde mischt drei Sicherungsaufgaben, vier Kernaufgaben und zwei Transfers aus unterschiedlichen Kontexten. Die Beispiele greifen unter anderem Verbkarten, Raumfahrt, Werkzeugdetektive und die Schatzsuche bei den Wikingern auf. Beim kleineren Pronomenbereich ergänzen materialnahe Neuentwicklungen die Vorlagen. Die Zeitangabe von sieben bis zehn Minuten bleibt ein Richtwert.</p>
-<p>Keine Anmeldung, kein Server, kein Ton. Für den Offlinebetrieb einmal mit Netz öffnen und die Bilder laden lassen. Die Passkarten bleiben auch bei einem Gerätewechsel nutzbar.</p></section></body></html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Grammatik-Zwergeninsel · Lehrer-Spickzettel</title><link href="schrift/schrift.css" rel="stylesheet"><style>
+  @page { size: A4; margin: 12mm; }
+  :root { --tinte: #3a2617; --hell: #6b5442; --holz: #8a4b1c; --rand: #b08a5a; --papier: #fffaf0; --gruen: #e4f1d4; --gold: #fff1cf; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Insel Text', sans-serif; color: var(--tinte); background: #efe6d6; font-size: 15px; line-height: 1.45; }
+  .leiste { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 10px 16px; background: #3a2617; color: #fff4dc; }
+  .leiste a, .leiste button { font: inherit; font-weight: 700; color: var(--tinte); background: #e8b23a; border: 0; border-radius: 8px; padding: 7px 14px; text-decoration: none; cursor: pointer; }
+  .leiste a.zurueck { background: #fff4dc; }
+  .leiste span { margin-right: auto; font-family: 'Insel Titel', sans-serif; font-size: 20px; }
+  .blatt { max-width: 186mm; margin: 16px auto; background: var(--papier); border-radius: 10px; padding: 12mm 13mm; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+  h1 { font-family: 'Insel Titel', sans-serif; font-weight: 400; color: var(--holz); font-size: 28px; margin: 0 0 2px; }
+  h2 { font-size: 18px; margin: 16px 0 6px; }
+  .unter { color: var(--hell); margin: 0 0 10px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; }
+  th, td { border: 1px solid var(--rand); padding: 5px 8px; vertical-align: top; text-align: left; }
+  th { background: #f3e6c8; }
+  td.zeit { width: 62px; white-space: nowrap; font-weight: 700; }
+  td.wer { width: 74px; white-space: nowrap; color: var(--hell); }
+  .kasten { border: 2px solid var(--rand); border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: #fff; }
+  .kasten.gold { background: var(--gold); border-color: #e8b23a; }
+  .kasten.gruen { background: var(--gruen); border-color: #9cc46f; }
+  .spalten { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+  ul { margin: 4px 0; padding-left: 20px; }
+  li { margin-bottom: 2px; }
+  .k { display: inline-block; padding: 0 6px; border-radius: 5px; background: #f3e6c8; border: 1px solid var(--rand); font-weight: 700; white-space: nowrap; }
+  @media print {
+    body { background: #fff; font-size: 9.5pt; line-height: 1.3; }
+    h1 { font-size: 22pt; } h2 { font-size: 11.5pt; margin: 10px 0 4px; }
+    th, td { padding: 3px 6px; }
+    .kasten { padding: 5px 10px; margin: 6px 0; break-inside: avoid; }
+    #spick { font-size: 8.5pt; } #spick li { margin-bottom: 1px; }
+    #intro .vorlesen p { font-size: 1.05em; line-height: 1.35; }
+    .leiste { display: none; }
+    .blatt { box-shadow: none; margin: 0; padding: 0; max-width: none; border-radius: 0; break-after: page; }
+    .blatt:last-child { break-after: auto; }
+  }
+  .intro-kopf { display: flex; gap: 14px; align-items: flex-start; }
+  .intro-kopf img { width: 32mm; flex: none; }
+  .vorlesen p { margin: 7px 0; font-size: 1.2em; line-height: 1.5; }
+  .hell { color: var(--hell); font-weight: 400; }
+  @media screen and (max-width: 700px) { .spalten { grid-template-columns: 1fr; } .blatt { padding: 18px; } td.wer { white-space: normal; } td { overflow-wrap: anywhere; } }
+
+#spick h2:first-child{margin-top:0}.spick-geb th,.spick-geb td{padding:3px 5px;font-size:.86em;line-height:1.23}.spick-zwerge{font-size:.9em}#spick .k{white-space:normal}#spick .kasten{padding:6px 9px}.spick-ablauf{margin-bottom:12px} .spick-geb td:first-child{width:30px;text-align:center}
+@media print{#spick{line-height:1.2}#spick h2{font-size:10.5pt;margin:8px 0 3px}#spick .spalten{gap:10px 14px}#spick .unter{margin-bottom:6px}#spick .spick-geb{margin:4px 0}#spick .spick-geb td{padding:2px 4px}#spick .kasten{padding:4px 7px;margin:5px 0}}
+@media print{#spick p{margin:5px 0}#spick .unter{margin:0 0 6px}}
+</style></head><body>
+<nav class="leiste"><a class="zurueck" href="index.html?ort=halle">← Zur Schmiede</a><span>Zwergeninsel · Für Lehrkräfte</span><a href="karten.html">Passkarten</a><a href="insel.html">Klasseninsel</a><button onclick="window.print()">Drucken</button></nav>
+<section class="blatt" id="spick"><h1>Spickzettel fürs Lehrerpult</h1><p class="unter">Grammatik · Klasse 5 · Gemeinsame Klasseninsel, persönlicher Lernstand</p>
+<div class="kasten gruen spick-ablauf"><b>45 Minuten:</b> 5 Min. Start &amp; Inselbotschaft → 30 Min. Stollen → 8 Min. Lieferung &amp; Pass → 2 Min. Abschluss.</div>
+<div class="spalten"><div>
+<h2>Start der Stunde</h2><ul><li>Board: <span class="k">Klasseninsel</span> öffnen. Erste Stunde: Klassengröße einstellen und feste Karten 1–32 verteilen.</li><li>iPad: <span class="k">Neuer Zwerg</span> → Kartennummer bestätigen → Figur wählen. Später: letzten persönlichen Pass eingeben. Auf fremden iPads nicht einfach „Weiterspielen“ wählen.</li><li>Die aktuelle <span class="k">Inselbotschaft</span> am Board zeigen und in der Schmiede eingeben lassen. Sie öffnet gemeinsam erreichte Bereiche.</li></ul>
+<h2>Vier Dinge auseinanderhalten</h2><ul><li><b>Kartennummer:</b> bleibt für das Kind immer gleich.</li><li><b>Persönlicher Zwergenpass:</b> <span class="k" id="passformat"></span>. Sichert Figur, Tiefen und bestätigte Lieferungen. Nur den neuesten Pass verwenden; alten durchstreichen.</li><li><b>Liefercode:</b> vier Zeichen für alle neuen Funde. Am Board unter <span class="k">Lieferung eintragen</span> ohne Enter eingeben. Wiederholte/ältere Codes geben nichts doppelt.</li><li><b>Inselbotschaft:</b> sechs Buchstaben vom Board; ersetzt keinen persönlichen Pass.</li></ul>
+<h2>Drei Kapitel · elf Stollen</h2><div id="kapitel"></div>
+<h2>Runden und Tiefen</h2><p>Neun Aufgaben je Runde. Hilfe bleibt möglich; auch nach gezeigter Lösung muss das Kind selbst richtig lösen.</p><table><tr><th>Tiefe</th><th>Bestehen</th><th>Erstmalige Belohnung</th></tr><tr><td>1</td><td>7/9 Erstversuche</td><td>1 Material fürs Dorf</td></tr><tr><td>2–4</td><td>7/9 Erstversuche</td><td>je 5 Edelsteine, freiwillig</td></tr><tr><td>5</td><td>8/9 Erstversuche</td><td>1 Stollenkrone, freiwillig</td></tr></table><p>Eine Wiederholung gibt keine neue Belohnung. Tiefen vertiefen dieselbe Kompetenz.</p>
+<h2>Wichtige Knöpfe</h2><ul><li><span class="k">Prüfen</span> / <span class="k">Hilfe</span>: gestufte Hinweise, kein Überspringen.</li><li><span class="k">Mein Fortschritt</span>: persönlicher Lernstand; die Insel bleibt das Klassenprojekt.</li><li><b>Rang antippen:</b> Aufstieg und nächste Stufe. 1 Punkt pro neuer Tiefe, 1 Zusatzpunkt pro Krone.</li><li><b>Figur:</b> Zwergensammlung. <b>Buch:</b> Sprachwissen ab Bibliothek. <b>Medaille:</b> Schätze/Abzeichen. <b>Vier Ecken:</b> Vollbild.</li></ul>
+<h2>Stundenende</h2><ol><li><span class="k">Lieferung</span>: Kind nennt vier Zeichen; Lehrkraft tippt sie am Board ein.</li><li>Kind bestätigt <span class="k">Auf der Insel angekommen</span>.</li><li><span class="k">Persönlichen Zwergenpass ansehen</span>: neuesten G2-Pass auf die Karte schreiben.</li><li><span class="k">Pass notiert – fertig für heute</span>, danach den Tab schließen.</li></ol>
+</div><div>
+<h2>Gebäude und Freischaltungen</h2><p><b>Gesamtbedarf = Baustufe × Klassengröße.</b> Gleiche Baustufe = gemeinsamer Bau. Edelsteine und Kronen beschleunigen ihn nicht.</p><table class="spick-geb"><thead><tr><th>Stufe</th><th>Gebäude</th><th>Funktion</th></tr></thead><tbody id="bauten"></tbody></table><p>„Sätze verbinden“ öffnet nach „Satzbau und Satzarten“ (Grundstufe). Eigene Grundstollen oder die Inselbotschaft öffnen weitere Bereiche.</p>
+<h2>Schätze und zurückkehrende Zwerge</h2><p>Abzeichen feiern Funde, Kapitel und freiwillige Erfolge. Gesperrte Schätze bleiben verborgen. Vier Startzwerge sind frei; weitere kommen zurück:</p><ul class="spick-zwerge" id="zwerge"></ul>
+<h2>Lehrkraft und Testmodus</h2><ul><li><b>Starttitel 5 Sekunden halten:</b> Passkarten, Spickzettel, Klasseninsel und Testmodus. Im Testmodus sind alle Tiefen offen; Leistungen verändern den Pass nicht.</li><li><b>Freie Inselstelle 5 Sekunden halten:</b> Klassengröße, Sicherung herunterladen/laden. Die Klassensicherung gehört auf das Board-Gerät.</li><li><b>Lieferfenster:</b> Bildschirm- oder physische Tastatur, Serieneingabe, Tagesraster; <span class="k">Rückgängig</span> nimmt den letzten Eintrag zurück.</li><li><b>Gebäude &amp; Funktionen:</b> Bauplätze, Baustufen und Freischaltungen. <b>Klassenfortschritt:</b> gelieferte Gesamtstände je Karte.</li></ul>
+<h2>Wenn etwas hakt</h2><table><tr><th>Problem</th><th>Handgriff</th></tr><tr><td>Fremder Lernstand</td><td>Eigenen letzten Pass von der Karte laden.</td></tr><tr><td>Gerätewechsel</td><td>Persönlichen Pass nutzen. Die Klasseninsel bleibt auf dem Board-Gerät.</td></tr></table><div class="kasten gold"><b>Vorbereiten:</b> App mit Netz auf allen Geräten öffnen und Bilder laden lassen. Danach ist Offlinebetrieb möglich. Die App bleibt vollständig lautlos.</div>
+</div></div></section>
+<script src="js/data.js"></script><script src="js/data-bau.js"></script><script src="js/pass.js"></script><script src="js/gemeinsam.js"></script><script>
+const Z=window.ZI,{h}=Z;document.getElementById('passformat').textContent=Z.PASS_FORMAT.muster;
+document.getElementById('kapitel').append(...Z.KAPITEL.map((k,i)=>h('p',null,h('b',null,(i+1)+'. '+k+': '),Z.STOLLEN.filter(s=>s.kapitel===i).map(s=>s.name).join(' · '))));
+document.getElementById('bauten').append(...Z.BAU.map(b=>h('tr',{'data-building':b.id},h('td',null,b.ab),h('td',null,b.name),h('td',null,b.funktion))));
+document.getElementById('zwerge').append(...Z.ZWERGE.filter(z=>!z.start).map(z=>h('li',null,h('b',null,z.name+': '),z.bedingung)));
+</script></body></html>

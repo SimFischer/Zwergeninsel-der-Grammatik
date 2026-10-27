@@ -5,7 +5,7 @@ const {chromium}=require('playwright');
  const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.jpg':'image/jpeg','.woff':'font/woff'};
  const server=http.createServer((req,res)=>{let file=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));if(file===root)file=path.join(root,'index.html');if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return;}fs.readFile(file,(e,b)=>{if(e){res.writeHead(404).end();return;}res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');res.end(b);});});
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://localhost:'+server.address().port;
- let browser,awardRevealed=false;const errors=[],audioRequests=[];
+ let browser,awardRevealed=false,rangRevealed=false;const errors=[],audioRequests=[];
  try{
   browser=await chromium.launch({timeout:20000,headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});
   const context=await browser.newContext({viewport:{width:1024,height:768},hasTouch:true,isMobile:true,reducedMotion:'reduce',serviceWorkers:'block'});
@@ -20,7 +20,7 @@ const {chromium}=require('playwright');
   const click=name=>page.getByRole('button',{name,exact:true}).evaluate(b=>b.click());
   async function shot(name){await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>{}))));await page.screenshot({path:path.join(shots,name+'.png')});}
   async function capture(){await page.evaluate(()=>{const orig=ZI.aufgabeAnsicht;ZI.aufgabeAnsicht=q=>{window.testQuestion=q;return orig(q);};const draw=ZI.rundeZiehen;ZI.rundeZiehen=(pool,name)=>{const round=draw(pool,name),q=pool.find(q=>q.type===window.forceType);return q?[q,...round.filter(p=>p.family!==q.family)].slice(0,9):round;};});}
-  async function drain(){let n=0;while(await page.locator('.freischaltung-fenster').count()){assert.ok(n++<30);if(await page.locator('.freischaltung-fenster img[src*="abzeichen-funke"]').count())awardRevealed=true;await page.locator('.freischaltung-fenster').getByRole('button',{name:'Weiter',exact:true}).evaluate(b=>b.click());}}
+  async function drain(){let n=0;while(await page.locator('.freischaltung-fenster').count()){assert.ok(n++<30);if(await page.locator('.freischaltung-fenster img[src*="abzeichen-funke"]').count())awardRevealed=true;if(await page.locator('.freischaltung-fenster .rang-neu').count())rangRevealed=true;await page.locator('.freischaltung-fenster').getByRole('button',{name:'Weiter',exact:true}).evaluate(b=>b.click());}}
   async function tutorial(){
    assert.equal(await page.locator('.vormach').count(),1);
    assert.equal(await page.locator('.vormach .runden-info[open]').count(),0);
@@ -64,7 +64,7 @@ const {chromium}=require('playwright');
   await page.getByRole('button',{name:'Hilda, Schmiedin',exact:true}).click();await shot('zwerge');await click('Diesen Zwerg nehmen');
   assert.ok(await page.getByRole('heading',{name:'Willkommen auf der Insel!',exact:true}).isVisible());await page.waitForFunction(()=>[...document.querySelectorAll('.insel-start .ruine img')].length===12&&[...document.querySelectorAll('.insel-start .ruine img')].every(i=>i.complete&&i.naturalWidth>0));assert.equal(await page.locator('.insel-start .bau').count(),12);assert.equal(await page.locator('.insel-start .fertig').count(),await page.evaluate(()=>ZI.gebaute(0).length));assert.deepEqual(await page.locator('.insel-start .bau.gebaut .fertig img').evaluateAll(imgs=>imgs.map(i=>i.getAttribute('src'))),await page.evaluate(()=>ZI.gebaute(0).map(ZI.BILD)));assert.equal(await page.locator('.story-vorschau .platzhalter').count(),0);await shot('story');
   for(let i=0;i<3;i++)await click('Weiter');await click('Los geht’s!');
-  assert.equal(await page.locator('.station[aria-disabled="false"]').count(),3);assert.ok(!/\bnull\b/.test(await page.locator('body').innerText()));await shot('halle');await capture();await page.getByRole('button',{name:'Abzeichen-Album öffnen',exact:true}).click();assert.equal(await page.locator('.medaille.gesperrt').count(),10);assert.equal(await page.locator('.medaille.gesperrt img').count(),0);assert.equal(await page.locator('.medaille.gesperrt .medaille-name').first().textContent(),'???');await shot('schaetze-gesperrt');await click('Zurück');
+  assert.equal(await page.locator('.station[aria-disabled="false"]').count(),3);assert.ok(!/\bnull\b/.test(await page.locator('body').innerText()));await shot('halle');await capture();await page.locator('.rang-knopf').click();assert.ok(await page.getByText('Noch 3 Rangpunkte bis „Funkenschmied“.',{exact:true}).isVisible());assert.equal(await page.locator('.rang-leiter .stufe').count(),7);assert.equal(await page.locator('.rang-leiter .stufe.erreicht').count(),1);await shot('ranguebersicht');await click('Schließen');await page.getByRole('button',{name:'Abzeichen-Album öffnen',exact:true}).click();assert.equal(await page.locator('.medaille.gesperrt').count(),10);assert.equal(await page.locator('.medaille.gesperrt img').count(),0);assert.equal(await page.locator('.medaille.gesperrt .medaille-name').first().textContent(),'???');await shot('schaetze-gesperrt');await click('Zurück');
   // Eine ungelöste Aufgabe bleibt nach Fehlern UND nach der Lösungshilfe offen.
   await page.locator('[data-stollen="0"]').click();await shot('tutorial');await tutorial();
   const id=await page.locator('[data-question]').getAttribute('data-question');
@@ -86,8 +86,8 @@ const {chromium}=require('playwright');
   await click('Persönlichen Zwergenpass ansehen');const code=await page.locator('.langpass-code').textContent();assert.match(code,/^G2-/);
   await page.goto(base+'/index.html');await page.getByRole('button',{name:/Weiterspielen als/}).click();assert.equal(await page.evaluate(()=>ZI.sitzung.lesen('zi-grammatik-aktiv','')),code);
   for(const size of [{width:1024,height:768},{width:1180,height:820}]){await page.setViewportSize(size);assert.equal(await page.evaluate(()=>[...document.querySelectorAll('.halle-inhalt,.stollen,.leiste')].some(e=>e.scrollWidth>e.clientWidth+2)),false);}
-  await page.setViewportSize({width:1024,height:768});await click('Meine Insel');await page.waitForURL('**/insel.html?eigen=1');assert.equal(await page.locator('.bau.gebaut').count(),12);await shot('insel-fertig');
-  await page.goto(base+'/insel.html');assert.equal(await page.locator('h1').count(),0);assert.ok(await page.getByText('Noch 27 Material',{exact:true}).isVisible());assert.equal(await page.getByText('0 / 297',{exact:true}).count(),0);await shot('insel-bauziel');
+  assert.equal(rangRevealed,true);await page.setViewportSize({width:1024,height:768});await click('Mein Fortschritt');assert.equal(await page.locator('[data-progress-stollen]').count(),11);assert.equal(await page.locator('.insel-screen').count(),0);assert.equal(await page.getByRole('button',{name:'Meine Insel',exact:true}).count(),0);await shot('mein-fortschritt');await page.goto(base+'/insel.html?eigen=1');await page.waitForURL('**/index.html?ort=fortschritt');assert.equal(await page.locator('[data-progress-stollen]').count(),11);
+  await page.goto(base+'/insel.html');assert.equal(await page.locator('h1').count(),0);assert.ok(await page.getByText('Noch 27 Materialien',{exact:true}).isVisible());assert.equal(await page.getByText('0 / 297',{exact:true}).count(),0);await shot('insel-bauziel');
   await page.locator('.insel-grund').dispatchEvent('pointerdown');await page.waitForTimeout(5100);await page.locator('.insel-grund').dispatchEvent('pointerup');
   await page.getByRole('spinbutton',{name:'Klassengröße',exact:true}).fill('27');await click('Klassengröße übernehmen');await click('Schließen');
   await click('Lieferung eintragen');await shot('board-lieferung');
@@ -116,6 +116,7 @@ const {chromium}=require('playwright');
   const rendered=await page.evaluate(()=>{
    let n=0;for(const qs of Object.values(ZI.POOLS))for(const pool of Object.values(qs))for(const q of pool){
     const v=ZI.aufgabeAnsicht(q),el=v.el;document.body.append(el);
+    if(q.focusWords?.some(w=>q.context?.includes(w)||q.fields?.some(f=>f.label.includes(w)))&&!el.querySelector('.g-zielwort'))throw Error(q.id+' Zielwort fehlt');
     if(q.fields)q.fields.forEach((f,i)=>{const row=el.querySelector('[data-field-index="'+i+'"]');if(!row.textContent.includes(ZI.feldLabel(q,f)))throw Error(q.id+' Beschriftung');});
     if(q.letterCase==='lower'&&[...el.querySelectorAll('.g-token')].some(b=>b.textContent!==b.textContent.toLowerCase()))throw Error(q.id+' Großschreibung verrät Lösung');
     if(q.degreeExample&&!el.querySelector('.g-example'))throw Error(q.id+' unabhängiges Beispiel fehlt');

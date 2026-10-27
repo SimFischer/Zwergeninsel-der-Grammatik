@@ -29,7 +29,8 @@
   .name { font-size: 10pt; line-height: 1.2; border-bottom: 0.3mm solid #8a6438; padding: 0.5mm 0 1.2mm; }
   .codes { display: grid; grid-template-columns: auto 1fr; column-gap: 2.5mm; grid-auto-rows: 1fr; font-size: 9pt; align-items: end; min-height: 0; }
   .codes span { line-height: 1.2; padding-bottom: 0.6mm; }
-  .codes span:nth-child(even) { border-bottom: 0.3mm dotted #8a6438; height: 100%; padding: 0; }
+  .codes>span:nth-child(even) { border-bottom: 0.3mm dotted #8a6438; height: 100%; padding: 0; }
+  .codes .passzeile{font-family:monospace;font-size:8.5pt;letter-spacing:.15mm;white-space:nowrap;border-bottom:0!important;display:flex;align-items:center}
   .fuss { display: flex; align-items: center; justify-content: center; gap: 2mm; padding: 0 5mm; }
   .klein { font-size: 7pt; line-height: 1.25; color: #6b5442; text-align: center; }
   .siegel { width: 7mm; height: 7mm; flex: none; }
@@ -46,12 +47,15 @@
 </style>
 </head>
 <body>
-<div class="leiste"><a class="zurueck" href="index.html#lehrkraft">← Zurück</a><span>Zwergenpass-Karten</span><button onclick="window.print()">Drucken</button></div>
+<div class="leiste"><a class="zurueck" href="index.html?ort=halle">← Zurück</a><span>Grammatikpass-Karten</span><button onclick="window.print()">Drucken</button></div>
 <div class="hinweis">
-  Jede Karte hat eine feste Nummer. Mit dieser Nummer kommt das Material auf die Insel. Gebt jedem Kind eine Karte und lasst es dieselbe Nummer behalten. Gedruckt werden so viele Karten, wie die Klasse Kinder hat, plus 3 Ersatzkarten (8 Karten pro Blatt). Anzahl: <input id="anzahl" type="number" min="1" max="32" value="27" style="width:60px;font:inherit">
+  Jede Karte hat eine feste Nummer. Hier steht der persönliche G2-Pass für den nächsten Spielstart. Der vierstellige Liefercode wird nur am Klassen-Board eingegeben. Gebt jedem Kind eine Karte und lasst es dieselbe Nummer behalten. Gedruckt werden so viele Karten, wie die Klasse Kinder hat, plus 3 Ersatzkarten (8 Karten pro Blatt). Anzahl: <input id="anzahl" type="number" min="1" max="32" value="27" style="width:60px;font:inherit">
   <button onclick="window.print()">Drucken</button>
 </div>
 <div id="blaetter"></div>
+<script src="js/data.js"></script>
+<script src="js/data-bau.js"></script>
+<script src="js/pass.js"></script>
 <script>
   const ziel = document.getElementById('blaetter');
   const feld = document.getElementById('anzahl');
@@ -62,17 +66,18 @@
     return `<img src="bilder/zwergenpass-portrait-${nr}.png" alt="">`;
   }
   function karte(n) {
+    const passZeile=ZI.PASS_FORMAT.muster.replace(/X/g,'_');
     return `
       <div class="karte">
-        <div class="kopf"><div class="portrait">${portrait(n)}</div><div class="titel">Zwergenpass<small>Zwergeninsel</small><img class="leiste-deko" src="bilder/zwergenpass-kopfzeile.png" alt=""></div><div class="nr">${n}</div></div>
+        <div class="kopf"><div class="portrait">${portrait(n)}</div><div class="titel">Zwergenpass<small>Grammatik · persönlicher Spielstand</small><img class="leiste-deko" src="bilder/zwergenpass-kopfzeile.png" alt=""></div><div class="nr">${n}</div></div>
         <div class="name">Name:</div>
         <div class="codes">
-          <span>1. Stunde</span><span></span>
-          <span>2. Stunde</span><span></span>
-          <span>3. Stunde</span><span></span>
-          <span>4. Stunde</span><span></span>
+          <span>1. Stunde</span><span class="passzeile">${passZeile}</span>
+          <span>2. Stunde</span><span class="passzeile">${passZeile}</span>
+          <span>3. Stunde</span><span class="passzeile">${passZeile}</span>
+          <span>4. Stunde</span><span class="passzeile">${passZeile}</span>
         </div>
-        <div class="fuss"><span class="klein">Grammatikpass: G2-XXXXXX-XXXXXX-XXXXXX. Immer den neuesten Code nutzen.</span><img class="siegel" src="bilder/zwergenpass-siegel.png" alt=""></div>
+        <div class="fuss"><span class="klein">Hier den persönlichen Pass notieren. Neuester Pass gilt. Lieferung: 4 Zeichen ans Board.</span><img class="siegel" src="bilder/zwergenpass-siegel.png" alt=""></div>
       </div>`;
   }
   function zeichne() {

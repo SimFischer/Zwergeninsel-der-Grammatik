@@ -4,6 +4,7 @@
    sind dadurch unschädlich. Keine Tageszähler, kein Server und keine Gerätebindung. */
 (function () {
   const Z = window.ZI;
+  Z.PASS_FORMAT=Object.freeze({version:"G2",muster:"G2-XXXXXX-XXXXXX-XXXXXX",zeichen:18,gruppen:3});
   const A = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   const integer = (v, min, max, fallback) => Number.isInteger(v) && v >= min && v <= max ? v : fallback;
   const checksum = n => {

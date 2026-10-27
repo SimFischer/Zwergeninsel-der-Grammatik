@@ -112,3 +112,16 @@ button:disabled{cursor:default;opacity:.5}
 .insel-start .ruine:not(.geladen) img{position:absolute;inset:0}
 .schatz-entdeckt .medaille-rund{animation:aufploppen .5s ease-out}
 .medaille.gesperrt .medaille-symbol{color:#72634f}
+/* Die Karte und die Bautafel liegen neben der Spielwelt, nicht über Bauplätzen. */
+.g-island{display:grid;grid-template-columns:minmax(0,1fr) clamp(250px,26vw,340px);grid-template-rows:minmax(0,1fr) auto;gap:14px;padding:16px}
+.g-island>.insel-buehne{position:relative;left:auto;top:auto;transform:none;grid-column:1;grid-row:1;align-self:center;justify-self:center;width:min(100%,calc((100dvh - 110px)*16/9));aspect-ratio:16/9}
+.g-island>.tafel{position:relative;inset:auto;grid-column:2;grid-row:1;align-self:start;transform:none;width:100%;min-width:0;max-width:100%;max-height:100%;overflow:auto}
+.g-island>.insel-knoepfe{position:relative;inset:auto;grid-column:1/-1;grid-row:2;transform:none;gap:10px}
+.g-zielwort{font-weight:700;font-size:1.16em;color:var(--tinte,#3a2617)}
+.rang-knopf{font:inherit;color:inherit;text-align:left;align-items:flex-start;background:transparent;border:0;padding:2px 6px;cursor:pointer;min-height:48px;border-radius:10px}
+.rang-knopf:focus-visible{outline:3px solid var(--gold)}
+.rang-knopf:hover{background:#fff2b81a}
+.rang-fortschritt{width:100%;min-height:22px;accent-color:#779342}
+.g-fortschritt-stollen{display:flex;align-items:center;flex-wrap:wrap;gap:10px;justify-content:space-between;border-top:1px solid #b08a5a66;padding:10px 0}
+.g-fortschritt-stollen>b{flex:1 1 180px}.g-fortschritt-stollen>small{flex:1 1 180px;color:var(--tinte-hell)}
+@media(max-width:700px) and (orientation:portrait){.g-island{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto}.g-island>.tafel{grid-row:1;grid-column:1;max-height:32vh}.g-island>.insel-buehne{grid-row:2}.g-island>.insel-knoepfe{grid-row:3}}

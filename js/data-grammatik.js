@@ -85,7 +85,8 @@
   const sol=v=>Array.isArray(v)?v:[v];
   const mc=(prompt,answer,options,context)=>({type:'choice',prompt,context,answer:sol(answer)[0],acceptedAnswers:sol(answer),options:[...new Set([...sol(answer),...options])],multipleSolutions:sol(answer).length>1});
   const mark=(prompt,s,type='mark')=>({type,prompt,...annotation(s)});
-  const fields=(type,prompt,rows,context)=>({type,prompt,context,fields:rows.map(r=>({label:Z.fachLabel(r[0]),solutions:sol(r[1]),...(r[2]?{options:r[2]}:{})})),multipleSolutions:rows.some(r=>sol(r[1]).length>1)});
+  const ausgang=(label,words,suffix='')=>{const focusWords=sol(words);return {context:label+': '+focusWords.join(' + ')+suffix,focusWords};};
+  const fields=(type,prompt,rows,context)=>({type,prompt,...(typeof context==='object'&&context?context:{context}),fields:rows.map(r=>({label:Z.fachLabel(r[0]),solutions:sol(r[1]),...(r[2]?{options:r[2]}:{})})),multipleSolutions:rows.some(r=>sol(r[1]).length>1)});
   const input=(type,prompt,solutions,context)=>({type,prompt,context,solutions:sol(solutions),multipleSolutions:sol(solutions).length>1});
   const assign=(type,prompt,items,answer,categories=[...new Set(answer)],context)=>({type,prompt,items,answer:answer.map(Z.fachLabel),categories:categories.map(Z.fachLabel),context});
   const order=(prompt,parts,answers,context)=>({type:'order',prompt,parts,answers,context,multipleSolutions:answers.length>1});
@@ -108,7 +109,7 @@
     if(hints.length!==3||hints.some(h=>!h))throw Error('Drei fachliche Hilfen fehlen: '+q.id);
     pool.push(q);return q;
   }
-  Z.G={tok,annotation,mc,mark,fields,input,assign,order,repair,add,sol,lueckensatz,upper:s=>s.charAt(0).toUpperCase()+s.slice(1)};
+  Z.G={tok,annotation,mc,mark,fields,input,assign,order,repair,add,sol,lueckensatz,ausgang,upper:s=>s.charAt(0).toUpperCase()+s.slice(1)};
   // Innerhalb jeder Tiefe bleibt derselbe Kompetenzkern erhalten.
   for(const s of Z.STOLLEN)Z.LERNZIELE[s.id]=[
     'Mit klaren Beispielen erkennen und anwenden',

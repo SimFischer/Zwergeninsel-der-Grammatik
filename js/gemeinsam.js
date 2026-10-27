@@ -76,6 +76,16 @@
     return box;
   };
 
+  // Zielwörter bleiben Textknoten; keinerlei HTML aus Aufgabeninhalten.
+  ZI.fokusText=function(text,words=[]){
+    const value=String(text||''),terms=[...new Set(words)].filter(Boolean).sort((a,b)=>b.length-a.length),result=[];let pos=0;
+    if(!terms.length)return [value];
+    const esc=w=>[...w].map(c=>'\\^$.*+?()[]{}|'.includes(c)?'\\'+c:c).join('');
+    const re=new RegExp(terms.map(esc).join('|'),'gu');
+    for(const match of value.matchAll(re)){const start=match.index,end=start+match[0].length;if(/\p{L}/u.test(value[start-1]||'')||/\p{L}/u.test(value[end]||''))continue;result.push(value.slice(pos,start),h('strong',{class:'g-zielwort'},match[0]));pos=end;}
+    result.push(value.slice(pos));return result;
+  };
+
   /* Kleine Strich-Symbole */
   const svg = (pfad) => {
     const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

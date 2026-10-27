@@ -52,11 +52,12 @@
     add('nomen',d,'sicherung',d===5?'A19':'A18',['Q001','Q047'],family,q,
       ['Prüfe die Bezeichnungen für Dinge, Lebewesen oder Vorstellungen.','Setze probeweise einen Artikel davor. Bei „beim“ steckt „bei dem“ darin.','Suche unter anderem die Bezeichnung „'+n.n+'“ und ihre Formen.'],
       '„'+n.n+'“ ist ein Nomen. Auch Nomen mitten im Satz werden großgeschrieben.');
-    if(d===1)q=fields('gap','Ergänze den passenden bestimmten Artikel und die Mehrzahl.',[['bestimmter Artikel Singular',n.a,['der','die','das']],['Plural mit Artikel','die '+n.p]],'Nomen: '+n.n);
-    else if(d===2)q=fields('form','Vervollständige die kleine Nomentabelle.',[['bestimmter Artikel Singular',n.a],['Plural mit Artikel','die '+n.p]],'Nomen: '+n.n);
-    else if(d===3)q=fields('form','Bilde das zusammengesetzte Nomen und ergänze seinen bestimmten Artikel.',[['zusammengesetztes Nomen',n.c],['Artikel zum neuen Nomen',n.ca]],n.parts.join(' + '));
+    if(d===1)q=fields('gap','Ergänze den passenden bestimmten Artikel und die Mehrzahl.',[['bestimmter Artikel Singular',n.a,['der','die','das']],['Plural mit Artikel','die '+n.p]],G.ausgang('Nomen',n.n));
+    else if(d===2)q=fields('form','Vervollständige die kleine Nomentabelle.',[['bestimmter Artikel Singular',n.a],['Plural mit Artikel','die '+n.p]],G.ausgang('Nomen',n.n));
+    else if(d===3)q=fields('form','Bilde das zusammengesetzte Nomen und ergänze seinen bestimmten Artikel.',[['zusammengesetztes Nomen',n.c],['Artikel zum neuen Nomen',n.ca]],G.ausgang('Ausgangswörter',n.parts));
     else if(d===4)q=fields('form','Ergänze die Formen und prüfe das Grundwort.',[['Nomen aus der Tätigkeit '+nominal[j].toLowerCase(),nominal[j]],['Plural von '+n.n+' mit Artikel','die '+n.p],['Artikel zu '+n.c,n.ca]]);
-    else q=fields('form','Überprüfe die Wörter für das Inselbuch.',[['Kompositum aus '+n.parts.join(' + '),n.c],['Plural des Kompositums mit Artikel','die '+kompositumPlural[j]],['Artikel des Kompositums',n.ca]]);
+    else q=fields('form','Überprüfe die Wörter für das Inselbuch.',[['Kompositum aus '+n.parts.join(' + '),n.c],['Plural des Kompositums mit Artikel','die '+kompositumPlural[j]],['Artikel des Kompositums',n.ca]],G.ausgang('Ausgangswörter',n.parts));
+    if(d===4)q.focusWords=[nominal[j].toLowerCase(),n.n,n.c];
     add('nomen',d,'kern',d>=3?'A07':'A02',['Q001','Q050'],family,q,
       d<=2?['Lies, ob der Artikel, die Einzahl oder die Mehrzahl gefragt ist.','Die Mehrzahl hat den bestimmten Artikel „die“. In der Einzahl bleibt das Geschlecht des Nomens erhalten.','Vergleiche die Formen: '+n.a+' '+n.n+' – die '+n.p+'.']:['Achte auf Artikel, Anzahl und Wortbildung.','Bei einem zusammengesetzten Nomen bestimmt das letzte Nomen den Artikel.','Das Grundwort ist „'+n.parts[1]+'“. Vergleiche außerdem '+n.a+' '+n.n+' mit die '+n.p+'.'],
       'Die Mehrzahl lautet „'+n.p+'“. „'+n.c+'“ hat den Artikel „'+n.ca+'“, weil sein Grundwort „'+n.parts[1]+'“ ist.');
@@ -126,11 +127,12 @@
     if(d===1){
       const rows=t<2?[['finite Verbform',forms,[...forms,v.inf,t===0?sol(v.past)[0]:sol(v.er)[0]]],...(v.partikel?[['abgetrennter Verbteil',v.partikel,[v.partikel,...['vor','aus','auf'].filter(p=>p!==v.partikel)]]]:[])]:[['finite Verbform',t===2?v.aux:'wird',['hat','ist','wird','haben']],['weiterer Verbteil',t===2?v.part:v.inf,[v.part,v.inf,sol(v.er)[0]]]];
       q=G.lueckensatz(fields('gap','Ergänze die vorgegebene Zeitform: '+zeiten[t]+'.',rows),satz(v,t,true));
-    }else if(d===2)q=fields('form','Ergänze die Formtabelle. Das Subjekt bleibt gleich.',[['Präsens',sol(v.er)],['Präteritum',sol(v.past)],['Partizip II',v.part]],'Verb: '+v.inf+' · Subjekt: '+v.s+(v.partikel?' · Die Partikel '+v.partikel+' bleibt bei Präsens und Präteritum abgetrennt.':''));
+    }else if(d===2)q=fields('form','Ergänze die Formtabelle. Das Subjekt bleibt gleich.',[['Präsens',sol(v.er)],['Präteritum',sol(v.past)],['Partizip II',v.part]],G.ausgang('Verb',v.inf,' · Subjekt: '+v.s+(v.partikel?' · Die Partikel '+v.partikel+' bleibt bei Präsens und Präteritum abgetrennt.':'')));
     else if(d===3||d===4){
       const ziel=(t+1)%4,variants=ziel===1?sol(v.past).map((_,i)=>satz(v,ziel,false,i)):ziel===0?sol(v.er).map((_,i)=>satz(v,ziel,false,i)):[satz(v,ziel)];
       q=input('transfer','Übertrage den ganzen Satz ins '+zeiten[ziel]+'.',variants,satz(v,t));
     }else q=fields('form','Vervollständige die Stammformen und den Zeitformwechsel.',[['Infinitiv',v.inf],['Präteritum für '+v.s,sol(v.past)],['Perfektsatz',satz(v,2)]],satz(v,0));
+    if(!q.focusWords)q.focusWords=[...sol(v.er),...sol(v.past),v.part,v.inf,v.partikel].filter(Boolean);
     add('verben',d,'kern',d===2||d===5?'A02':d===1?'A04':'A03',['Q001','Q059','Q077'],family,q,
       ['Lies zuerst, welche Zeitform gefordert ist.','Die Person bleibt gleich. Für Perfekt und Futur I musst du alle Verbteile berücksichtigen.','Präsens: '+sol(v.er).join(' oder ')+'. Präteritum: '+sol(v.past).join(' oder ')+'. Partizip II: '+v.part+'.'],
       'Der Infinitiv „'+v.inf+'“ gehört zu den '+(v.klasse==='schwach'?'schwachen':v.klasse==='gemischt'?'gemischten':'starken')+' Verben. Passender Beispielsatz: '+satz(v,t));
@@ -196,11 +198,12 @@
     add('adjektive',d,'sicherung',d===5?'A19':'A37',['Q001','Q037'],family,q,
       ['Suche die Wörter, die Eigenschaften oder eine Wahrnehmung beschreiben.','Prüfe die Verbindung mit dem Nomen. Nach dem Artikel kann eine Endung nötig sein.','Vergleiche die Grundform „'+pos+'“ mit einer passenden Form wie „'+form+'“.'],
       'Adjektive können vor einem Nomen stehen oder anders verwendet werden. Die Endung richtet sich nach dem Zusammenhang.');
-    if(d===1)q=fields('form','Ergänze die erste Steigerungsform.',[['Komparativ',kom]],'Adjektiv: '+pos);
-    else if(d===2)q=fields('form','Vervollständige die Steigerungsreihe.',[['Komparativ',kom],['Superlativ mit am',sup]],'Adjektiv: '+pos);
+    if(d===1)q=fields('form','Ergänze die erste Steigerungsform.',[['Komparativ',kom]],G.ausgang('Adjektiv',pos));
+    else if(d===2)q=fields('form','Vervollständige die Steigerungsreihe.',[['Komparativ',kom],['Superlativ mit am',sup]],G.ausgang('Adjektiv',pos));
     else if(d===3)q=fields('form','Ergänze die Adjektivformen.',[['Komparativ von '+pos,kom],['Superlativ mit am',sup],['Adjektiv vor dem Nomen',m[2],m[2].concat(m[3])]],'Die erste Textfassung soll freundlich wirken: '+m[1]);
     else if(d===4)q=fields('transfer','Gestalte eine freundlich erwartungsvolle Textfassung. Wähle in beiden Lücken eine passende Form.',[[m[0],m[2],m[2].concat(m[3])],[zweite[0],zweite[2],zweite[2].concat(zweite[3])]],m[1]+' '+zweite[1]+' Die Kinder freuen sich auf den Besuch.');
-    else q=fields('form','Prüfe die Formen für die überarbeitete Beschreibung.',[['Komparativ',kom],['Superlativ mit am',sup]],'Adjektiv: '+pos);
+    else q=fields('form','Prüfe die Formen für die überarbeitete Beschreibung.',[['Komparativ',kom],['Superlativ mit am',sup]],G.ausgang('Adjektiv',pos));
+    if(d===3)q.focusWords=[pos];
     if(d!==4)q.degreeExample=pos==='schnell'?['hell','heller','am hellsten']:['schnell','schneller','am schnellsten'];
     add('adjektive',d,'kern',d===4?'A10':'A08',['Q001','Q037','Q041'],family,q,
       ['Lies die ganze Beschreibung, bevor du ein Wort auswählst.','Vergleiche Eigenschaften mit dem Komparativ. Bei Textwirkung zählt der gesamte Zusammenhang; es gibt oft mehrere passende Wörter.','Die Steigerung von „'+pos+'“ lautet „'+kom+'“ und „'+sup+'“. Für eine freundliche Fassung passen hier zum Beispiel „'+m[2][0]+'“ oder „'+m[2][1]+'“.'],
@@ -302,7 +305,7 @@
   ['Mann',['der Mann','des Mannes','dem Mann','den Mann'],['{Der Mann} trägt einen Rucksack.','Die Schuhe {des Mannes} sind schmutzig.','Die Wirtin antwortet {dem Mann}.','Das Kind grüßt {den Mann}.'],['der müde Mann','des müden Mannes','dem müden Mann','den müden Mann']],
   ['Schiffe',['die Schiffe','der Schiffe','den Schiffen','die Schiffe'],['{Die Schiffe} ankern.','Die Segel {der Schiffe} flattern.','Die Crew folgt {den Schiffen}.','Hilda zählt {die Schiffe}.'],['die alten Schiffe','der alten Schiffe','den alten Schiffen','die alten Schiffe']],
   ['Blumen',['die Blumen','der Blumen','den Blumen','die Blumen'],['{Die Blumen} duften.','Die Farben {der Blumen} leuchten.','Das Kind gibt {den Blumen} Wasser.','Svea gießt {die Blumen}.'],['die roten Blumen','der roten Blumen','den roten Blumen','die roten Blumen']],
-  ['Seeräuber (Mehrzahl)',['die Seeräuber','der Seeräuber','den Seeräubern','die Seeräuber'],['{Die Seeräuber} singen.','Die Hüte {der Seeräuber} sind nass.','Die Crew hilft {den Seeräubern}.','Leo beobachtet {die Seeräuber}.'],['die mutigen Seeräuber','der mutigen Seeräuber','den mutigen Seeräubern','die mutigen Seeräuber']],
+  ['Seeräuber',['die Seeräuber','der Seeräuber','den Seeräubern','die Seeräuber'],['{Die Seeräuber} singen.','Die Hüte {der Seeräuber} sind nass.','Die Crew hilft {den Seeräubern}.','Leo beobachtet {die Seeräuber}.'],['die mutigen Seeräuber','der mutigen Seeräuber','den mutigen Seeräubern','die mutigen Seeräuber']],
  ];
  for(let d=1;d<=5;d++)bank.forEach(([n,formen,saetze,erweitert],j)=>{
   const k=j%4,s=saetze[k],gruppe=s.match(/{([^}]+)}/)[1],family='kasus-'+j,context=s.replace(/[{}]/g,'');let q;
@@ -313,7 +316,7 @@
    ['Frage im vollständigen Satz nach der gesuchten Wortgruppe.','Die Frage „'+fragen[k]+'“ führt hier zur gesuchten Gruppe.','Die Form „'+(d>=3?erweitert[k]:gruppe)+'“ steht hier im '+namen[k]+'.'],
    'Die Frage „'+fragen[k]+'“ bestimmt hier den '+namen[k]+'. Artikel und gegebenenfalls Adjektiv gehören zur Nomengruppe.');
   const ks=d===1?[k,(k+2)%4]:d===2?[0,1,2,3]:[k,(k+1)%4,(k+2)%4];
-  q=fields('form',d>=3?'Setze die ganze Nomengruppe mit Adjektiv in die verlangten Fälle.':'Ergänze die Kasustabelle. Schreibe Artikel und Nomen.',ks.map(i=>[namen[i]+' – '+fragen[i],d>=3?erweitert[i]:formen[i]]),'Nomen: '+n+(j>=9?' (Mehrzahl)':' (Einzahl)')+(d>=3?' · Eigenschaft: '+['alt','schwer','gelb','mutig','klein','riesig','magisch','silbern','müde','alt','rot','mutig'][j]:''));
+  q=fields('form',d>=3?'Setze die ganze Nomengruppe mit Adjektiv in die verlangten Fälle.':'Ergänze die Kasustabelle. Schreibe Artikel und Nomen.',ks.map(i=>[namen[i]+' – '+fragen[i],d>=3?erweitert[i]:formen[i]]),G.ausgang('Nomen',n,(j>=9?' (Mehrzahl)':' (Einzahl)')+(d>=3?' · Eigenschaft: '+['alt','schwer','gelb','mutig','klein','riesig','magisch','silbern','müde','alt','rot','mutig'][j]:'')));
   add('faelle',d,'kern','A02',['Q050','Q042'],family,q,
    ['Lies für jede Tabellenzeile die Kasusfrage.','Artikel und gegebenenfalls Endungen müssen zum gefragten Fall passen.','Vergleiche: '+erweitert.join(' – ')+'.'],
    'Die Formen lauten: '+formen.map(v=>sol(v).join(' / ')).join(' – ')+'. Auch bei gleich aussehenden Formen entscheidet die Frage im Satz.');

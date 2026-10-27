@@ -1,7 +1,8 @@
 /* Gemeinsame Insel: die vorhandene Bühne mit automatischem Grammatik-Bauplan. */
 (function(){
-  const Z=window.ZI,{h,bild}=Z,KEY='zi-grammatik-insel',own=new URLSearchParams(location.search).has('eigen');
-  const personal=Z.Stand.ausCode(Z.sitzung.lesen('zi-grammatik-aktiv',''));
+  const Z=window.ZI,{h,bild}=Z,KEY='zi-grammatik-insel';
+  // Alte persönliche Insellinks führen zum Lernstand, nicht zu einer zweiten Insel.
+  if(new URLSearchParams(location.search).has('eigen')){location.replace('index.html?ort=fortschritt');return;}
   let board=readBoard(Z.speicher.lesen(KEY,null)),undo=null;
   function readBoard(raw){
     const out={version:1,klassengroesse:27,zwerge:{},lieferungen:{},tage:{}};
@@ -13,10 +14,10 @@
     return out;
   }
   const btn=(label,action,attrs={})=>h('button',{class:'knopf',type:'button',onclick:action,...attrs},label);
-  const save=()=>{if(!own)Z.speicher.schreiben(KEY,board);};
-  const beitraege=()=>own?(personal?[Z.lieferung.ausStand(personal)]:[]):Object.values(board.lieferungen);
+  const save=()=>Z.speicher.schreiben(KEY,board);
+  const beitraege=()=>Object.values(board.lieferungen);
   const material=()=>beitraege().reduce((n,s)=>n+s.material,0);
-  const welt=()=>own?(personal?Math.max(personal.coreTotal(),personal.welt):0):Math.floor(material()/board.klassengroesse);
+  const welt=()=>Math.floor(material()/board.klassengroesse);
   const gems=()=>beitraege().reduce((n,s)=>n+s.schritte*Z.REGELN.edelsteine,0);
   document.body.classList.add('insel-seite');
   const scene=Z.inselSzene(),screen=h('div',{class:'insel-screen g-island'}),tafel=h('aside',{class:'tafel pergament auf-pergament'});
@@ -26,9 +27,8 @@
   grund.addEventListener('pointerdown',()=>{clearTimeout(timer);timer=setTimeout(settings,5000);});
   ['pointerup','pointerleave','pointercancel'].forEach(e=>grund.addEventListener(e,()=>clearTimeout(timer)));
   grund.addEventListener('contextmenu',e=>e.preventDefault());
-  const nav=h('nav',{class:'insel-knoepfe'},h('a',{class:'knopf holz',href:'index.html'+(own?'?ort=halle':'')},'Zur Schmiede'),btn('Gebäude & Funktionen',gebaeude));
-  if(!own)nav.append(btn('Lieferung eintragen',liefern),btn('Klassenfortschritt',ueberblick));
-  if(own)nav.append(btn('Zum Dorfplatz',()=>location.href='index.html?ort=dorfplatz',{disabled:!personal||!Z.hatGebaeude(personal,'ratsplatz')}));
+  const nav=h('nav',{class:'insel-knoepfe'},h('a',{class:'knopf holz',href:'index.html'},'Zur Schmiede'),btn('Gebäude & Funktionen',gebaeude));
+  nav.append(btn('Lieferung eintragen',liefern),btn('Klassenfortschritt',ueberblick));
   screen.append(scene.el,tafel,nav);document.getElementById('app').append(screen);
   let vorher=new Set(),kompakt=false;
   function update(animate=false){
@@ -39,22 +39,22 @@
     });
     if(animate&&gebaut.includes('festhalle')&&!vorher.has('festhalle'))Z.feuerwerk(3000);
     vorher=new Set(gebaut);
-    const figures=own&&personal?Z.ZWERGE.filter(z=>personal.zwergFrei(z.nr)):beitraege().map(s=>Z.ZWERGE.find(z=>z.nr===s.zwerg));
+    const figures=beitraege().map(s=>Z.ZWERGE.find(z=>z.nr===s.zwerg));
     Z.setze(scene.zwergSchicht,...figures.map((z,i)=>h('div',{class:'mini-zwerg',style:{left:(24+(i%8)*7)+'%',top:(56+Math.floor(i/8)*8)+'%'}},bild(z.datei,z.name))));
     Z.setze(scene.schmuckSchicht,...Z.SCHMUCK.slice(0,Math.floor(gems()/Z.SCHMUCK_PRO)).map(s=>h('div',{class:'schmuck',style:{left:s.x+'%',top:s.y+'%',width:s.w+'%'}},bild(s.id,s.name))));
-    const next=Z.BAU.find(b=>b.ab>welt()),n=own?1:board.klassengroesse;
+    const next=Z.BAU.find(b=>b.ab>welt()),n=board.klassengroesse;
     tafel.classList.toggle('kompakt',kompakt);
     if(next){
       const g=Z.GEBAEUDE.find(g=>g.id===next.id);
       const letzte=Math.max(0,...Z.BAU.filter(b=>b.ab<next.ab).map(b=>b.ab))*n;
-      const ziel=next.ab*n,wert=Math.max(0,Math.min(ziel-letzte,material()-letzte));
+      const ziel=Z.baukosten(next,n),wert=Math.max(0,Math.min(ziel-letzte,material()-letzte));
       Z.setze(tafel,h('div',{class:'tafel-kopf'},h('h2',null,g.name),btn(kompakt?'▾':'▴',()=>{kompakt=!kompakt;update();},{class:'tafel-klapp','aria-label':kompakt?'Bauziel ausklappen':'Bauziel einklappen'})),
-        !kompakt?h('div',{class:'bau-vorschau'},bild(g.id+'-ruine',g.name+' als Ruine'),h('span',{'aria-hidden':'true'},'→'),bild(g.id,g.name+' fertig')):null,
-        h('strong',{class:'bau-rest'},'Noch '+Math.max(0,ziel-material())+' Material'),
+        !kompakt?h('div',{class:'bau-vorschau'},bild(g.ruinenAsset,g.name+' als Ruine'),h('span',{'aria-hidden':'true'},'→'),bild(g.fertigAsset,g.name+' fertig')):null,
+        h('strong',{class:'bau-rest'},'Noch '+Z.materialMenge(Math.max(0,ziel-material()))),
         h('progress',{max:ziel-letzte,value:wert,'aria-label':'Fortschritt bis '+g.name}),
         !kompakt?h('small',null,next.funktion):null);
     }else Z.setze(tafel,bild('festhalle','Festhalle','fest-vorschau'),h('h2',null,'Zeit für das Inselfest!'));
-    if(!own)Z.anhaengen(tafel, btn('Inselbotschaft',()=>dialog([bild('runenplatte','','runen-bild'),h('h2',null,'Botschaft für eure Zwerge'),h('strong',{class:'inselwort'},Z.botschaft.kodiere(welt())),h('p',null,'Diese sechs Buchstaben öffnen eure neuen Stollen.')])),!kompakt?h('div',{class:'zeile'},bild('edelstein',''),String(gems())+' Edelsteine'):null);
+    Z.anhaengen(tafel, btn('Inselbotschaft',()=>dialog([bild('runenplatte','','runen-bild'),h('h2',null,'Botschaft für eure Zwerge'),h('strong',{class:'inselwort'},Z.botschaft.kodiere(welt())),h('p',null,'Diese sechs Buchstaben öffnen eure neuen Stollen.')])),!kompakt?h('div',{class:'zeile'},bild('edelstein',''),Z.menge(gems(),'Edelstein','Edelsteine')):null);
 
     save();
   }
@@ -63,8 +63,7 @@
   function gebaeude(){
     dialog([h('h2',null,'Gebäude und Freischaltungen'),h('div',{class:'g-building-list'},...Z.BAU.map(b=>{
       const g=Z.GEBAEUDE.find(g=>g.id===b.id),ok=welt()>=b.ab;
-      let route=b.id==='bibliothek'?'buch':['ratsplatz','festhalle'].includes(b.id)?'dorfplatz':b.id.startsWith('huette')?'sammlung':'halle';
-      return h('article',{class:ok?'':'g-locked'},bild(g.id,g.name,'g-icon'),h('div',null,h('h3',null,g.name+(ok?' ✓':'')),h('p',null,b.funktion),h('small',null,`Baustufe ${b.ab} · ${own?b.ab:b.ab*board.klassengroesse} Material`)),own&&ok?btn('Besuchen',()=>location.href='index.html?ort='+route):null);
+      return h('article',{class:ok?'':'g-locked','data-building':b.id},bild(ok?b.fertigAsset:b.ruinenAsset,g.name,'g-icon'),h('div',null,h('h3',null,g.name+(ok?' ✓':'')),h('p',null,b.funktion),h('small',null,'Baustufe '+b.ab+' · '+Z.materialMenge(Z.baukosten(b,board.klassengroesse))+' insgesamt')));
     }))]);
   }
   // Bildschirmtastatur, vier Kästen und Klassenraster aus der ursprünglichen Insel.
@@ -80,7 +79,7 @@
     function zeigePuffer(){kaesten.forEach((k,i)=>{k.textContent=puffer[i]||'';k.classList.toggle('voll',!!puffer[i]);});}
     function zeigeRaster(){
       Z.setze(raster,...Array.from({length:board.klassengroesse},(_,i)=>h('div',{class:'liefer-zelle'+(board.tage[i+1]===tag()?' da':board.lieferungen[i+1]?' frueher':''),'aria-label':'Karte '+(i+1)+(board.tage[i+1]===tag()?' heute geliefert':'')},String(i+1))));
-      zaehler.textContent=Object.entries(board.tage).filter(([id,t])=>Number(id)<=board.klassengroesse&&t===tag()).length+' von '+board.klassengroesse+' Karten heute';
+      zaehler.textContent=Object.entries(board.tage).filter(([id,t])=>Number(id)<=board.klassengroesse&&t===tag()).length+' von '+Z.menge(board.klassengroesse,'Karte','Karten')+' heute';
     }
     function tippe(c){
       c=String(c).toUpperCase();if(!ZEICHEN.includes(c))return;
@@ -91,7 +90,7 @@
       undo=JSON.stringify(board);board.lieferungen[info.id]=nach;board.tage[info.id]=tag();save();
       const neuMaterial=nach.material-(alt?.material||0),neuGems=(nach.schritte-(alt?.schritte||0))*Z.REGELN.edelsteine,neuKronen=nach.kronen-(alt?.kronen||0);
       const z=Z.ZWERGE.find(z=>z.nr===info.zwerg);
-      const fund=[neuMaterial?'+'+neuMaterial+' Material':null,neuGems?'+'+neuGems+' Edelsteine':null,neuKronen?'+'+neuKronen+' Stollenkronen':null].filter(Boolean).join(' · ');
+      const fund=[neuMaterial?'+'+Z.materialMenge(neuMaterial):null,neuGems?'+'+Z.menge(neuGems,'Edelstein','Edelsteine'):null,neuKronen?'+'+Z.menge(neuKronen,'Stollenkrone','Stollenkronen'):null].filter(Boolean).join(' · ');
       Z.setze(rueck,h('div',{class:'liefer-ok'},h('div',{class:'liefer-ok-bild'},bild(z.datei,z.name)),h('div',null,h('div',{class:'liefer-ok-titel'},'Karte '+info.id+' · '+z.name),h('strong',null,fund||'Schon angekommen – nichts doppelt gezählt.')),btn('Rückgängig',rueckgaengig,{class:'knopf holz klein'})));
       zeigePuffer();zeigeRaster();
     }
@@ -112,14 +111,13 @@
     f.el.classList.add('breit','liefer-dialog');document.addEventListener('keydown',taste);document.addEventListener('paste',paste);zeigeRaster();zeigePuffer();
   }
   function ueberblick(){
-    dialog([h('h2',null,'Klassenfortschritt · '+beitraege().length+' Karten'),h('div',{class:'g-building-list'},...beitraege().sort((a,b)=>a.id-b.id).map(s=>h('p',null,'Karte '+s.id+': '+s.material+' Material · '+s.schritte*Z.REGELN.edelsteine+' Edelsteine · '+s.kronen+' Kronen'))),h('p',null,'Noch ohne Lieferung: '+Array.from({length:board.klassengroesse},(_,i)=>i+1).filter(n=>!board.lieferungen[n]).join(', '))]);
+    dialog([h('h2',null,'Klassenfortschritt · '+Z.menge(beitraege().length,'Karte','Karten')),h('div',{class:'g-building-list'},...beitraege().sort((a,b)=>a.id-b.id).map(s=>h('p',null,'Karte '+s.id+': '+Z.materialMenge(s.material)+' · '+Z.menge(s.schritte*Z.REGELN.edelsteine,'Edelstein','Edelsteine')+' · '+Z.menge(s.kronen,'Krone','Kronen')))),h('p',null,(()=>{const offen=Array.from({length:board.klassengroesse},(_,i)=>i+1).filter(n=>!board.lieferungen[n]);return offen.length?'Noch ohne Lieferung: '+offen.join(', '):'Für jede Karte ist eine Lieferung angekommen.';})())]);
   }
   function settings(){
-    if(own)return;
     const count=h('input',{type:'number',min:1,max:32,value:board.klassengroesse,'aria-label':'Klassengröße'}),feedback=h('p',{role:'status'});
     const upload=h('input',{type:'file',accept:'application/json','aria-label':'Inselsicherung auswählen',onchange:async()=>{
       try{const raw=JSON.parse(await upload.files[0].text());if(raw.version!==1||!Number.isInteger(raw.klassengroesse)||raw.klassengroesse<1||raw.klassengroesse>32||!raw.zwerge||Array.isArray(raw.zwerge)||typeof raw.zwerge!=='object'||Object.values(raw.zwerge).some(code=>!Z.Stand.ausCode(code)?.id)||(raw.lieferungen&&(!raw.lieferungen||Array.isArray(raw.lieferungen)||typeof raw.lieferungen!=='object'||Object.values(raw.lieferungen).some(info=>!info||!Z.lieferung.kodiere(info)))))throw Error();
-        const f=dialog([h('h2',null,'Diese Sicherung laden?'),h('p',null,Object.keys(readBoard(raw).lieferungen).length+' Karten · Klasse mit '+raw.klassengroesse+' Kindern'),btn('Sicherung übernehmen',()=>{undo=JSON.stringify(board);board=readBoard(raw);update();f.schliessen();feedback.textContent='Sicherung geladen.';})]);
+        const f=dialog([h('h2',null,'Diese Sicherung laden?'),h('p',null,Z.menge(Object.keys(readBoard(raw).lieferungen).length,'Karte','Karten')+' · Klasse mit '+Z.menge(raw.klassengroesse,'Kind','Kindern')),btn('Sicherung übernehmen',()=>{undo=JSON.stringify(board);board=readBoard(raw);update();f.schliessen();feedback.textContent='Sicherung geladen.';})]);
       }catch(e){feedback.textContent='Diese Datei ist keine gültige Grammatikinsel-Sicherung.';}
     }});
     dialog([h('h2',null,'Lehrkraft · Inselverwaltung'),h('label',null,'Klassengröße',count),btn('Klassengröße übernehmen',()=>{const n=Number(count.value);if(!Number.isInteger(n)||n<1||n>32){feedback.textContent='Bitte 1 bis 32 eingeben.';return;}board.klassengroesse=n;update();feedback.textContent='Klassengröße gespeichert.';}),

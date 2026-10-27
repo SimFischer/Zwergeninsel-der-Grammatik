@@ -19,6 +19,13 @@
     ['leuchtturm',9,'Die Satzbaumeister'],
     ['festhalle',11,'Inselfest und große Grammatik-Mischrunde'],
   ].map(([id,ab,funktion])=>({id,ab,funktion}));
+  // Bauplan und Inselbühne nutzen dieselben Datensätze: kein unsichtbarer Bauplatz.
+  if(new Set(Z.BAU.map(b=>b.id)).size!==Z.BAU.length||Z.BAU.length!==Z.GEBAEUDE.length)throw Error('Gebäudelisten passen nicht zusammen');
+  Z.BAU=Z.BAU.map(b=>{const g=Z.GEBAEUDE.find(g=>g.id===b.id);if(!g)throw Error('Bauplatz fehlt: '+b.id);return {...g,...b,ruinenAsset:b.id+'-ruine',fertigAsset:b.id};});
+  Z.GEBAEUDE=Z.BAU;
+  Z.baukosten=(b,klassengroesse=1)=>b.ab*klassengroesse;
+  Z.menge=(n,singular,plural)=>n+' '+(n===1?singular:plural);
+  Z.materialMenge=n=>Z.menge(n,'Material','Materialien');
   Z.gebaute = m => Z.BAU.filter(b => m >= b.ab).map(b => b.id);
   Z.hatGebaeude = (s,id) => Z.gebaute(Math.max(s.coreTotal(),s.welt)).includes(id);
   Z.KAPITEL = ['Die Wortschmiede','Die Satzwerkstatt','Die Satzbaumeister'];
